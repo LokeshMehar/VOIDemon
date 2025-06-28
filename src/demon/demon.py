@@ -6,7 +6,9 @@ logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %
 gossip = Flask(__name__)
 
 
-
+@gossip.route('/VOIDemon', methods=['GET'])
+def get_hello_from_node():
+    return "Hello from VOIDemon😈"
 
 if __name__ == "__main__":
     # get port from container
