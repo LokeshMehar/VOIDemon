@@ -1,6 +1,9 @@
 import requests
 import logging
+import psutil
 import time
+import hashlib
+import json
 
 from singleton import Singleton
 logger = logging.getLogger("demon.metrics")
@@ -31,8 +34,121 @@ last_metric_values = {}
 # Track when each metric was last sent
 last_metric_sent_round = {}
 
+def mk_digest(to_digest):
+    nested_dict_str = json.dumps(to_digest, sort_keys=True)
+    hash_object = hashlib.sha256()
+    hash_object.update(nested_dict_str.encode('utf-8'))
+    digest = hash_object.hexdigest()
+    return digest
 
 
+def should_send_metric(node, metric, value):
+    # Initialize tracking dictionaries if needed
+    if metric not in last_metric_values:
+        last_metric_values[metric] = value
+        last_metric_sent_round[metric] = 0
+        return True  # Always send first time
+        
+    # Get priority for this metric
+    priority = METRIC_PRIORITIES.get(metric, PRIORITY_HIGH)
+    
+    # Calculate rounds since last sent
+    rounds_since_sent = node.cycle - last_metric_sent_round[metric]
+    
+    # Calculate delta (percent change) for numeric metrics
+    if isinstance(value, (int, float)) and isinstance(last_metric_values[metric], (int, float)) and last_metric_values[metric] != 0:
+        if metric == "network" or metric == "storage":
+            # For network and storage, calculate absolute change
+            delta_percent = abs(value - last_metric_values[metric]) / max(value, last_metric_values[metric]) * 100
+        else:
+            # For CPU and memory, calculate percentage point change
+            delta_percent = abs(value - last_metric_values[metric])
+    else:
+        delta_percent = float('inf')  # Always send non-numeric or zero-based values
+        
+    # Determine if we should send this metric
+    should_send = False
+    
+    # Always send high priority metrics
+    if priority == PRIORITY_HIGH:
+        should_send = True
+    # Send medium/low priority metrics based on schedule or significant change
+    elif rounds_since_sent >= priority:
+        should_send = True
+    # Send if significant change detected
+    elif delta_percent >= METRIC_DELTAS.get(metric, 0):
+        should_send = True
+        
+    # Update last sent round if sending
+    if should_send:
+        last_metric_sent_round[metric] = node.cycle
+    
+    # Always update last value for future delta calculations
+    last_metric_values[metric] = value
+    
+    # Log decision with structured information
+    logger.debug(f"METRIC_PRIORITY: metric={metric}, value={value:.2f}, priority={priority}, " +
+                f"delta={delta_percent:.2f}%, rounds_since_sent={rounds_since_sent}, decision={'SEND' if should_send else 'SKIP'}")
+    
+    return should_send
+
+def get_new_data():
+    node = Node.instance()
+    network = psutil.net_io_counters().bytes_recv + psutil.net_io_counters().bytes_sent
+    
+    # Get current metric values
+    current_metrics = {
+        "cpu": psutil.cpu_percent(),
+        "memory": psutil.virtual_memory().percent,
+        "network": network,
+        "storage": psutil.disk_usage('/').free
+    }
+    
+    # Determine which metrics to send based on priority and delta
+    metrics_to_send = {}
+    metrics_filtered = {}
+    
+    for metric, value in current_metrics.items():
+        if should_send_metric(node, metric, value):
+            metrics_to_send[metric] = value
+        else:
+            metrics_filtered[metric] = value
+    
+    # Create the data structure with only selected metrics
+    app_state = {}
+    for metric in metrics_to_send:
+        app_state[metric] = str(metrics_to_send[metric])
+    
+    # Track metrics statistics for this round
+    node.data_flow_per_round.setdefault(node.cycle, {})
+    node.data_flow_per_round[node.cycle]['metrics_sent'] = len(metrics_to_send)
+    node.data_flow_per_round[node.cycle]['metrics_filtered'] = len(metrics_filtered)
+    
+    # Store data about which metrics were sent this round
+    metric_flags = {metric: (metric in metrics_to_send) for metric in current_metrics}
+    
+    data = {
+        "counter": "{}".format(node.gossip_counter),
+        "cycle": "{}".format(node.cycle),
+        "digest": "",
+        "nodeState": {
+            "id": "",
+            "ip": "{}".format(node.ip),
+            "port": "{}".format(node.port)},
+        "hbState": {
+            "timestamp": "{}".format(time.time()),
+            "failureCount": node.failure_counter,
+            "failureList": node.failure_list,
+            "nodeAlive": node.is_alive},
+        "appSate": app_state,
+        "nfState": {},
+        "metric_sent_flags": metric_flags
+    }
+    
+    digest = mk_digest(data)
+    data["digest"] = digest
+    
+    return data
 
 @Singleton
 class Node:
