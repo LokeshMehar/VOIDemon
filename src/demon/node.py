@@ -1,4 +1,4 @@
-
+import requests
 import logging
 logger = logging.getLogger("demon.metrics")
 
@@ -53,6 +53,25 @@ class Node:
         self.push_mode = None
         self.is_send_data_back = None
         self.metric_last_sent = {}  # Track when each metric was last sent
+        
+    def set_params(self, ip, port, cycle, node_list, data, is_alive, gossip_counter, failure_counter,
+                   monitoring_address, database_address, is_send_data_back, client_thread, counter_thread, data_flow_per_round, push_mode, client_port):
+        self.ip = ip
+        self.port = port
+        self.monitoring_address = monitoring_address
+        self.database_address = database_address
+        self.cycle = cycle
+        self.node_list = node_list
+        self.data = data
+        self.is_alive = is_alive
+        self.gossip_counter = gossip_counter
+        self.failure_counter = failure_counter
+        self.client_thread = client_thread
+        self.counter_thread = counter_thread
+        self.data_flow_per_round = data_flow_per_round
+        self.is_send_data_back = is_send_data_back
+        self.push_mode = push_mode
+        self.client_port = client_port
 
     
 
