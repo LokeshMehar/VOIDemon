@@ -235,6 +235,9 @@ class Node:
                 self.data[new_time_key][n["ip"] + ':' + n["port"]]["hbState"]["nodeAlive"] = False
         pass
     
+    def delete_node_from_nodelist(self, key_to_delete):
+        self.node_list.pop(key_to_delete)
+    
     
         
     def set_params(self, ip, port, cycle, node_list, data, is_alive, gossip_counter, failure_counter,
