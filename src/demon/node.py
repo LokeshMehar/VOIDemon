@@ -220,6 +220,20 @@ class Node:
 
         for n in random_nodes:
             self.send_to_node(n, new_time_key)
+            
+            
+    def update_failure_data(self, new_time_key, n):
+        if self.ip + ':' + self.port not in self.data[new_time_key].get(n["ip"] + ':' + n["port"], {}).get("hbState",
+                                                                                                           {}).get(
+            "failureList", []):
+            self.data[new_time_key][n["ip"] + ':' + n["port"]]["hbState"]["failureList"].append(
+                self.ip + ':' + self.port)
+            f_count = self.data[new_time_key].get(n["ip"] + ':' + n["port"], {}).get("hbState", {}).get("failureCount",
+                                                                                                        0) + 1
+            if f_count >= 3:
+                self.delete_node_from_nodelist(n["ip"] + ':' + n["port"])
+                self.data[new_time_key][n["ip"] + ':' + n["port"]]["hbState"]["nodeAlive"] = False
+        pass
     
     
         
