@@ -1,6 +1,8 @@
 import requests
 import logging
 import time
+
+from singleton import Singleton
 logger = logging.getLogger("demon.metrics")
 
 # Define priority levels and update frequencies
