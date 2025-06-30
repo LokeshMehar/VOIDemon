@@ -1,5 +1,6 @@
 import requests
 import logging
+import time
 logger = logging.getLogger("demon.metrics")
 
 # Define priority levels and update frequencies
@@ -53,6 +54,25 @@ class Node:
         self.push_mode = None
         self.is_send_data_back = None
         self.metric_last_sent = {}  # Track when each metric was last sent
+        
+        
+    def start_gossip_counter(self):
+        while self.is_alive:
+            self.gossip_counter += 1
+            time.sleep(1)
+
+    def start_gossiping(self, target_count, gossip_rate):
+        print("Starting gossiping with target count: {} and gossip rate: {} and length of node list: {}".format(
+            target_count, gossip_rate, len(self.node_list)),
+            flush=True)
+        while self.is_alive:
+            if self.push_mode == "1":
+                print("Pushing data", flush=True)
+                if self.cycle % 10 == 0 and self.cycle != 0:
+                    self.push_latest_data_and_delete_after_push()
+            self.cycle += 1
+            self.transmit(target_count)
+            time.sleep(gossip_rate)
         
     def set_params(self, ip, port, cycle, node_list, data, is_alive, gossip_counter, failure_counter,
                    monitoring_address, database_address, is_send_data_back, client_thread, counter_thread, data_flow_per_round, push_mode, client_port):
