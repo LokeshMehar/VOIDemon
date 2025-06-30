@@ -237,6 +237,12 @@ class Node:
     
     def delete_node_from_nodelist(self, key_to_delete):
         self.node_list.pop(key_to_delete)
+        
+    def prepare_requested_data(self, time_key, requested_keys):
+        requested_data = {}
+        for key in requested_keys:
+            requested_data[key] = self.data[time_key][key]
+        return requested_data
     
     
         
