@@ -75,6 +75,37 @@ class Node:
             self.cycle += 1
             self.transmit(target_count)
             time.sleep(gossip_rate)
+            
+    def prepare_metadata_and_own_fresh_data(self, time_key):
+        metadata = {}
+        own_key = self.ip + ':' + self.port
+        own_recent_data = self.data[time_key][own_key]
+        
+        # Apply priority filtering to own data
+        filtered_own_data = self.get_filtered_data_by_priority(own_recent_data)
+        
+        for key in self.data[time_key]:
+            if 'counter' in self.data[time_key][key] and key is not own_key:
+                metadata[key] = self.data[time_key][key]['counter']
+        
+        to_send = {'metadata': metadata, own_key: filtered_own_data}
+        return to_send
+
+    def transmit(self, target_count):
+        new_time_key = self.gossip_counter
+        if len(self.data) > 0:
+            latest_entry = max(self.data.keys(), key=int)
+            latest_data = self.data[latest_entry]
+            self.data[new_time_key] = latest_data
+        else:
+            self.data[new_time_key] = {}
+        self.data[new_time_key][self.ip + ':' + self.port] = get_new_data()
+        random_nodes = self.get_random_nodes(self.node_list, target_count)
+
+        for n in random_nodes:
+            self.send_to_node(n, new_time_key)
+    
+    
         
     def set_params(self, ip, port, cycle, node_list, data, is_alive, gossip_counter, failure_counter,
                    monitoring_address, database_address, is_send_data_back, client_thread, counter_thread, data_flow_per_round, push_mode, client_port):
