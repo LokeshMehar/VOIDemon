@@ -68,7 +68,13 @@ def compare_node_data_with_metadata(data):
     requests_updates = {'requested_keys': ips_to_update, 'updates': data_to_send}
     return requests_updates
 
-
+@gossip.route('/receive_message', methods=['GET'])
+def receive_message():
+    if not Node.instance().is_alive:
+        # reset_node()
+        return "Dead Node", 500
+    compare_and_update_node_data(request.get_json())
+    return "OK"
 
 @gossip.route('/VOIDemon', methods=['GET'])
 def get_hello_from_node():
