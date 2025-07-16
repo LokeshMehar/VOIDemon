@@ -1,14 +1,24 @@
+import signal
+import time
 
+import requests
 from flask import Flask, request
 from node import Node
 import threading
 import logging
 import json
-import time
 
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
 gossip = Flask(__name__)
 
+
+@gossip.route('/receive_message', methods=['GET'])
+def receive_message():
+    if not Node.instance().is_alive:
+        # reset_node()
+        return "Dead Node", 500
+    compare_and_update_node_data(request.get_json())
+    return "OK"
 
 
 @gossip.route('/metadata', methods=['GET'])
@@ -71,6 +81,34 @@ def compare_node_data_with_metadata(data):
             ips_to_update.append(key)
     requests_updates = {'requested_keys': ips_to_update, 'updates': data_to_send}
     return requests_updates
+
+
+@gossip.route('/receive_metadata', methods=['POST'])
+def receive_metadata():
+    if not Node.instance().is_alive:
+        # reset_node()
+        return "Dead Node", 500
+    data = compare_node_data_with_metadata(request.get_json())
+    return data
+
+
+@gossip.route('/reset_node')
+def reset_node():
+    node = Node.instance()
+    node.is_alive = False
+    node.client_thread.join()
+    node.counter_thread.join()
+    node.set_params(None, None, 0, None, {}, False, 0, 0, None, None, None, None, {}, push_mode=0)
+    return "OK"
+
+
+@gossip.route('/stop_node')
+def stop_node():
+    node = Node.instance()
+    node.is_alive = False
+    node.client_thread.join()
+    node.counter_thread.join()
+    return "OK"
 
 
 def compare_and_update_node_data(inc_data):
@@ -158,28 +196,6 @@ def compare_and_update_node_data(inc_data):
                                                                              inc_round), json=to_send)
 
 
-@gossip.route('/receive_message', methods=['GET'])
-def receive_message():
-    if not Node.instance().is_alive:
-        # reset_node()
-        return "Dead Node", 500
-    compare_and_update_node_data(request.get_json())
-    return "OK"
-
-@gossip.route('/metadata', methods=['GET'])
-def get_metadata():
-    if not Node.instance().is_alive:
-        # reset_node()
-        return "Dead Node", 500
-    node = Node.instance()
-    latest_entry = max(node.data.keys(), key=int)
-    metadata = {}
-    for key in node.data[latest_entry]:
-        if 'counter' in node.data[latest_entry][key]:
-            metadata[key] = {'counter': node.data[latest_entry][key]['counter'],
-                             'digest': node.data[latest_entry][key]['digest']}
-    return json.dumps(metadata)
-
 @gossip.route('/start_node', methods=['POST'])
 def start_node():
     init_data = request.get_json()
@@ -222,26 +238,11 @@ def register_new_node():
     Node.instance().node_list.append(request.get_json())
     return "OK"
 
-@gossip.route('/reset_node')
-def reset_node():
-    node = Node.instance()
-    node.is_alive = False
-    node.client_thread.join()
-    node.counter_thread.join()
-    node.set_params(None, None, 0, None, {}, False, 0, 0, None, None, None, None, {}, push_mode=0)
-    return "OK"
-
-@gossip.route('/stop_node')
-def stop_node():
-    node = Node.instance()
-    node.is_alive = False
-    node.client_thread.join()
-    node.counter_thread.join()
-    return "OK"
 
 @gossip.route('/get_data_from_node', methods=['GET'])
 def get_data_from_node():
     return Node.instance().data
+
 
 @gossip.route('/get_recent_data_from_node', methods=['GET'])
 def get_recent_data_from_node():
@@ -249,9 +250,18 @@ def get_recent_data_from_node():
     latest_entry = max(data.keys(), key=int)
     return data[latest_entry]
 
+
 @gossip.route('/get_nodelist_from_node', methods=['GET'])
 def get_nodelist_from_node():
     return json.dumps(Node.instance().node_list)
+
+
+@gossip.route('/hello_world', methods=['GET'])
+def get_hello_from_node():
+    return "Hello from gossip agent!"
+
+
+# Add new endpoint
 
 @gossip.route('/metrics_priority_stats', methods=['GET'])
 def get_metrics_priority_stats():
@@ -284,10 +294,6 @@ def get_metrics_priority_stats():
         'deltas': {k: v for k, v in METRIC_DELTAS.items()}
     })
 
-
-@gossip.route('/VOIDemon', methods=['GET'])
-def get_hello_from_node():
-    return "Hello from VOIDemon😈"
 
 if __name__ == "__main__":
     # get port from container
