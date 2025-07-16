@@ -1,6 +1,10 @@
 
-from flask import Flask
+from flask import Flask, request
+from node import Node
+import threading
 import logging
+import json
+import time
 
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
 gossip = Flask(__name__)
@@ -198,6 +202,12 @@ def start_node():
         global METRIC_DELTAS
         METRIC_DELTAS.update(init_data['metric_deltas'])
 
+    return "OK"
+
+
+@gossip.route('/register_new_node', methods=['POST'])
+def register_new_node():
+    Node.instance().node_list.append(request.get_json())
     return "OK"
 
 @gossip.route('/VOIDemon', methods=['GET'])
