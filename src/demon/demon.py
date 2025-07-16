@@ -166,7 +166,19 @@ def receive_message():
     compare_and_update_node_data(request.get_json())
     return "OK"
 
-
+@gossip.route('/metadata', methods=['GET'])
+def get_metadata():
+    if not Node.instance().is_alive:
+        # reset_node()
+        return "Dead Node", 500
+    node = Node.instance()
+    latest_entry = max(node.data.keys(), key=int)
+    metadata = {}
+    for key in node.data[latest_entry]:
+        if 'counter' in node.data[latest_entry][key]:
+            metadata[key] = {'counter': node.data[latest_entry][key]['counter'],
+                             'digest': node.data[latest_entry][key]['digest']}
+    return json.dumps(metadata)
 
 @gossip.route('/start_node', methods=['POST'])
 def start_node():
