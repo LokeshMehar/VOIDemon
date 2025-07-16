@@ -21,6 +21,55 @@ def get_metadata():
                              'digest': node.data[latest_entry][key]['digest']}
     return json.dumps(metadata)
 
+
+def compare_node_data_with_metadata(data):
+    # metadata form: {ip1: counter1, ip2: counter2, .....}
+    # to_send = {'metadata': metadata, key:own_recent_data}
+    node = Node.instance()
+    metadata = data['metadata']
+    sender_key = next(key for key in data if key != 'metadata')
+    sender_data = data[sender_key]
+    if len(node.data) == 0:
+        # node doesnt store any data yet
+        return metadata.keys()
+    latest_entry = max(node.data.keys(), key=int)
+    all_keys = set().union(node.data[latest_entry].keys(), metadata.keys())
+    all_keys.discard(sender_key)
+    node.data_flow_per_round.setdefault(node.cycle, {})
+    if sender_key in node.data[latest_entry]:
+        node.data_flow_per_round[node.cycle].setdefault('fd', 0)
+        node.data_flow_per_round[node.cycle]['fd'] += 1
+    else:
+        node.data_flow_per_round[node.cycle].setdefault('nd', 0)
+        node.data_flow_per_round[node.cycle].setdefault('fd', 0)
+        node.data_flow_per_round[node.cycle]['nd'] += 1
+        node.data_flow_per_round[node.cycle]['fd'] += 1
+
+    node.data[latest_entry][sender_key] = sender_data
+
+    # lists of ips who reclaim that this node is dead
+    ips_to_update = []
+    data_to_send = {}
+    for key in all_keys:
+        # both nodes store the data if IP
+        if key in node.data[latest_entry] and key in metadata:
+            # node doesnt store the key or counter of metadata > counter of noda.data
+            if ('counter' not in node.data[latest_entry][key]) or (
+                    float(metadata[key]) > float(node.data[latest_entry][key]['counter'])):
+                ips_to_update.append(key)
+            else:
+                data_to_send[key] = node.data[latest_entry][key]
+        # metadata doesnt store the data of IP
+        elif key in node.data[latest_entry] and key not in metadata:
+            data_to_send[key] = node.data[latest_entry][key]
+        # node doesnt store the data of IP
+        else:
+            ips_to_update.append(key)
+    requests_updates = {'requested_keys': ips_to_update, 'updates': data_to_send}
+    return requests_updates
+
+
+
 @gossip.route('/VOIDemon', methods=['GET'])
 def get_hello_from_node():
     return "Hello from VOIDemon😈"
