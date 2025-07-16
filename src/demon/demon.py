@@ -249,6 +249,10 @@ def get_recent_data_from_node():
     latest_entry = max(data.keys(), key=int)
     return data[latest_entry]
 
+@gossip.route('/get_nodelist_from_node', methods=['GET'])
+def get_nodelist_from_node():
+    return json.dumps(Node.instance().node_list)
+
 
 @gossip.route('/VOIDemon', methods=['GET'])
 def get_hello_from_node():
