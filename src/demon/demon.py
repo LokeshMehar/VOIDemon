@@ -239,6 +239,11 @@ def stop_node():
     node.counter_thread.join()
     return "OK"
 
+@gossip.route('/get_data_from_node', methods=['GET'])
+def get_data_from_node():
+    return Node.instance().data
+
+
 @gossip.route('/VOIDemon', methods=['GET'])
 def get_hello_from_node():
     return "Hello from VOIDemon😈"
