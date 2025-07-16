@@ -162,6 +162,44 @@ def receive_message():
     compare_and_update_node_data(request.get_json())
     return "OK"
 
+
+
+@gossip.route('/start_node', methods=['POST'])
+def start_node():
+    init_data = request.get_json()
+    monitoring_address = init_data["monitoring_address"]
+    client_port = init_data["client_port"]
+    database_address = init_data["database_address"]
+    node_list = init_data["node_list"]
+    target_count = init_data["target_count"]
+    gossip_rate = init_data["gossip_rate"]
+    node_ip = init_data["node_ip"]
+    is_send_data_back = init_data["is_send_data_back"]
+    push_mode = init_data["push_mode"]
+    node = Node.instance()
+    time.sleep(10)
+    client_thread = threading.Thread(target=node.start_gossiping, args=(target_count, gossip_rate))
+    counter_thread = threading.Thread(target=node.start_gossip_counter)
+    node.set_params(node_ip,
+                    request.headers.get('Host').split(':')[1], 0,
+                    node_list, {}, True, 0, 0, monitoring_address, database_address,
+                    is_send_data_back=is_send_data_back,
+                    client_thread=client_thread, counter_thread=counter_thread, data_flow_per_round={},
+                    push_mode=push_mode, client_port=client_port)
+    client_thread.start()
+    counter_thread.start()
+
+    # Configure metric priorities and deltas if provided
+    if 'metric_priorities' in init_data:
+        global METRIC_PRIORITIES
+        METRIC_PRIORITIES.update(init_data['metric_priorities'])
+    
+    if 'metric_deltas' in init_data:
+        global METRIC_DELTAS
+        METRIC_DELTAS.update(init_data['metric_deltas'])
+
+    return "OK"
+
 @gossip.route('/VOIDemon', methods=['GET'])
 def get_hello_from_node():
     return "Hello from VOIDemon😈"
