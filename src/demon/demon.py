@@ -253,6 +253,37 @@ def get_recent_data_from_node():
 def get_nodelist_from_node():
     return json.dumps(Node.instance().node_list)
 
+@gossip.route('/metrics_priority_stats', methods=['GET'])
+def get_metrics_priority_stats():
+    """Get statistics about priority-based metric filtering"""
+    node = Node.instance()
+    
+    # Calculate stats if node has data
+    if len(node.data) == 0:
+        return json.dumps({"error": "No data available"})
+    
+    # Get sent/filtered counts
+    metrics_sent = node.metrics_sent_count if hasattr(node, 'metrics_sent_count') else 0
+    metrics_filtered = node.metrics_filtered_count if hasattr(node, 'metrics_filtered_count') else 0
+    
+    # Get per-round metrics stats
+    per_round_stats = {}
+    for round_num, stats in node.data_flow_per_round.items():
+        per_round_stats[round_num] = {
+            'metrics_sent': stats.get('metrics_sent', 0),
+            'metrics_filtered': stats.get('metrics_filtered', 0)
+        }
+    
+    # Return statistics
+    return json.dumps({
+        'total_metrics_sent': metrics_sent,
+        'total_metrics_filtered': metrics_filtered,
+        'bandwidth_savings_percent': round(100 * metrics_filtered / (metrics_sent + metrics_filtered) if (metrics_sent + metrics_filtered) > 0 else 0, 2),
+        'per_round_stats': per_round_stats,
+        'priorities': {k: v for k, v in METRIC_PRIORITIES.items()},
+        'deltas': {k: v for k, v in METRIC_DELTAS.items()}
+    })
+
 
 @gossip.route('/VOIDemon', methods=['GET'])
 def get_hello_from_node():
