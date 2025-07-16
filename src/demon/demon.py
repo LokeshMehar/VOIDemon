@@ -243,6 +243,12 @@ def stop_node():
 def get_data_from_node():
     return Node.instance().data
 
+@gossip.route('/get_recent_data_from_node', methods=['GET'])
+def get_recent_data_from_node():
+    data = Node.instance().data
+    latest_entry = max(data.keys(), key=int)
+    return data[latest_entry]
+
 
 @gossip.route('/VOIDemon', methods=['GET'])
 def get_hello_from_node():
