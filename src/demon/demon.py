@@ -231,7 +231,13 @@ def reset_node():
     node.set_params(None, None, 0, None, {}, False, 0, 0, None, None, None, None, {}, push_mode=0)
     return "OK"
 
-
+@gossip.route('/stop_node')
+def stop_node():
+    node = Node.instance()
+    node.is_alive = False
+    node.client_thread.join()
+    node.counter_thread.join()
+    return "OK"
 
 @gossip.route('/VOIDemon', methods=['GET'])
 def get_hello_from_node():
