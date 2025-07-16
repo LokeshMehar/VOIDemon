@@ -222,6 +222,17 @@ def register_new_node():
     Node.instance().node_list.append(request.get_json())
     return "OK"
 
+@gossip.route('/reset_node')
+def reset_node():
+    node = Node.instance()
+    node.is_alive = False
+    node.client_thread.join()
+    node.counter_thread.join()
+    node.set_params(None, None, 0, None, {}, False, 0, 0, None, None, None, None, {}, push_mode=0)
+    return "OK"
+
+
+
 @gossip.route('/VOIDemon', methods=['GET'])
 def get_hello_from_node():
     return "Hello from VOIDemon😈"
