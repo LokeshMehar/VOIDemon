@@ -1,48 +1,36 @@
+import random
+import time
+
 import requests
 
-def query(node_list, target_node_ip, target_node_port):
-    target_key = target_node_ip + ":" + target_node_port
-    
-    for i, node in enumerate(node_list):
-        try:
-            print(f"Querying node {i+1}/{len(node_list)}: {node['ip']}:{node['port']}")
-            
-            # Get metadata first
-            metadata_url = f"http://{node['ip']}:{node['port']}/metadata"
-            r = requests.get(metadata_url, timeout=5)
-            
-            if r.status_code != 200:
-                print(f"Node {i+1} returned status {r.status_code}")
-                continue
-                
-            metadata = r.json().get(target_key)
-            if not metadata:
-                print(f"Node {i+1} doesn't have metadata for target")
-                continue
-                
-            print(f"Metadata found on node {i+1}: {metadata}")
-            
-            # Get actual data
-            data_url = f"http://{node['ip']}:{node['port']}/get_recent_data_from_node"
-            response = requests.get(data_url, timeout=5)
-            
-            if response.status_code != 200:
-                print(f"Data request failed on node {i+1}")
-                continue
-                
-            result = response.json().get(target_key)
-            if result:
-                print(f"Query successful on node {i+1}: {result}")
-                return result
-            else:
-                print(f"Node {i+1} doesn't have data for target")
-                
-        except requests.exceptions.Timeout:
-            print(f"Timeout querying node {i+1}")
-        except requests.exceptions.ConnectionError:
-            print(f"Connection error to node {i+1}")
-        except Exception as e:
-            print(f"Error querying node {i+1}: {e}")
-    
-    print("All nodes failed or don't have the requested data")
-    return None
+
+def query(node_list, quorum_size, target_node_ip, target_node_port, docker_ip):
+    while True:
+        random_nodes = random.sample(node_list, quorum_size)
+        metadatas = {}
+        total_messages_for_query = 0
+        for n in random_nodes:
+            total_messages_for_query += 1
+            try:
+                if docker_ip:
+                    r = requests.get("http://" + docker_ip + ":" + n["port"] + "/metadata")
+                    print(r.json()[target_node_ip + ":" + target_node_port]["counter"])
+                else:
+                    r = requests.get("http://" + n["ip"] + ":" + n["port"] + "/metadata")
+                metadatas[n["ip"] + ":" + n["port"]] = r.json()[target_node_ip + ":" + target_node_port]
+            except Exception as e:
+                print("Node " + n["ip"] + ":" + n["port"] + " is not responding: {}".format(e))
+        if len(metadatas) == quorum_size:
+            counter_consensus = all(data['counter'] == list(metadatas.values())[0]['counter'] for data in metadatas.values())
+            if counter_consensus:
+                digest_consensus = all(data['digest'] == list(metadatas.values())[0]['digest'] for data in metadatas.values())
+                if digest_consensus:
+                    if docker_ip:
+                        response_from_query_client = requests.get(
+                            "http://{}:{}/get_recent_data_from_node".format(docker_ip, random_nodes[0]["port"]))
+                    else:
+                        response_from_query_client = requests.get(
+                            "http://{}:{}/get_recent_data_from_node".format(random_nodes[0]["ip"], random_nodes[0]["port"]))
+                    query_result = response_from_query_client.json()[target_node_ip + ":" + target_node_port]
+                    print("Query result: {}".format(query_result))
+                    return total_messages_for_query, query_result
