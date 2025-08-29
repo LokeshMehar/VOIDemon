@@ -1,22 +1,38 @@
-FROM python:3.9
-ENV PYTHONUNBUFFERED=0
+# Build stage
+FROM python:3.9-slim as builder
 
-RUN mkdir -p /mini
+WORKDIR /build
 
+# Install build dependencies
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends gcc && \
+    rm -rf /var/lib/apt/lists/*
 
-WORKDIR /mini
+# Install Python dependencies
+COPY requirements.txt .
+RUN pip install --user --no-cache-dir -r requirements.txt
 
-COPY requirements.txt ./requirements.txt
-RUN pip install -r requirements.txt
+# Runtime stage
+FROM python:3.9-slim
 
-COPY . .
+# Copy Python packages from builder
+COPY --from=builder /root/.local /root/.local
 
+# Set environment variables
+ENV PYTHONUNBUFFERED=1
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PATH=/root/.local/bin:$PATH
 
-# Exposing Port
+# Create non-root user
+RUN groupadd -r demon && useradd -r -g demon demon
+
+WORKDIR /app
+
+# Copy application files
+COPY --chown=demon:demon demon.py node.py ./
+
+USER demon
+
 EXPOSE 5000
 
-# Persitance when needed
-#VOLUME ["path/to/gossip-data"]
-
-# Running Python App demon
-CMD ["python", "./demon.py"]
+CMD ["python", "-u", "demon.py"]
