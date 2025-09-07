@@ -45,6 +45,40 @@ def insert_into_round_of_node(run_id, ip, port, this_round, nd, fd, rm, ic, byte
     
     
     
+def insert_into_round_of_node_max_round(run_id, ip, port, this_round, nd, fd, rm, ic, bytes_of_data, connection):
+    try:
+        connection = get_connection()
+        cursor = connection.cursor()
+        cursor.execute("DELETE FROM round_of_node_max_round WHERE run_id = ? AND ip = ? AND port = ? AND round = ?",
+                       (run_id, ip, port, this_round))
+        cursor.execute("INSERT INTO round_of_node_max_round ("
+                       "run_id,"
+                       "ip,"
+                       "port,"
+                       "round,"
+                       "nd,"
+                       "fd,"
+                       "rm,"
+                       "ic,"
+                       "bytes_of_data) "
+                       "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                       (run_id,
+                        ip,
+                        port,
+                        this_round,
+                        nd,
+                        fd,
+                        rm,
+                        ic,
+                        bytes_of_data))
+        connection.commit()
+        connection.close()
+        return True
+    except Exception as e:
+        print("Error db: {}".format(e))
+        return False
+
+    
 
 class NodeDB:
     def __init__(self):
