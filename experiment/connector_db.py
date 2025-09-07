@@ -197,3 +197,28 @@ class DemonDB:
         except Exception as e:
             print("Error DB Insert: {}".format(e))
             return -1
+        
+    def insert_into_run(self, experiment_id, run_count, node_count, gossip_rate, target_count):
+        try:
+            self.connection = sqlite3.connect('demonDB.db', check_same_thread=False)
+            self.cursor = self.connection.cursor()
+            self.cursor.execute("INSERT INTO run ("
+                                "experiment_id,"
+                                "run_count, "
+                                "node_count, "
+                                "gossip_rate, "
+                                "target_count) "
+                                "VALUES (?, ?, ?, ?, ?)",
+                                (experiment_id,
+                                 run_count,
+                                 node_count,
+                                 gossip_rate,
+                                 target_count
+                                 ))
+            to_return = self.cursor.lastrowid
+            self.connection.commit()
+            self.connection.close()
+            return to_return
+        except Exception as e:
+            print("Error DB Insert run: {}".format(e))
+            return -1
