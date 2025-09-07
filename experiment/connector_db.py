@@ -166,3 +166,22 @@ class DemonDB:
         )
         self.connection.commit()
         self.connection.close()
+    def insert_run_metric_config(self, run_id, profile_label,
+                                 cpu_p, mem_p, net_p, stor_p,
+                                 cpu_d, mem_d, net_d, stor_d):
+        try:
+            self.connection = sqlite3.connect('demonDB.db', check_same_thread=False)
+            self.cursor = self.connection.cursor()
+            self.cursor.execute("""
+                INSERT INTO run_metric_config (
+                    run_id, profile_label,
+                    cpu_priority, memory_priority, network_priority, storage_priority,
+                    cpu_delta, memory_delta, network_delta, storage_delta
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """, (run_id, profile_label,
+                  cpu_p, mem_p, net_p, stor_p,
+                  cpu_d, mem_d, net_d, stor_d))
+            self.connection.commit()
+            self.connection.close()
+        except Exception as e:
+            print(f"Error inserting run_metric_config: {e}")
