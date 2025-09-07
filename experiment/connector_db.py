@@ -9,6 +9,43 @@ parser.read('demonMonitoring.ini')
 def get_connection():
     return sqlite3.connect('demonDB.db', check_same_thread=False)
 
+
+def insert_into_round_of_node(run_id, ip, port, this_round, nd, fd, rm, ic, bytes_of_data, connection):
+    try:
+        connection = get_connection()
+        cursor = connection.cursor()
+        cursor.execute("DELETE FROM round_of_node WHERE run_id = ? AND ip = ? AND port = ? AND round = ?",
+                       (run_id, ip, port, this_round))
+        cursor.execute("INSERT INTO round_of_node ("
+                       "run_id,"
+                       "ip,"
+                       "port,"
+                       "round,"
+                       "nd,"
+                       "fd,"
+                       "rm,"
+                       "ic,"
+                       "bytes_of_data) "
+                       "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                       (run_id,
+                        ip,
+                        port,
+                        this_round,
+                        nd,
+                        fd,
+                        rm,
+                        ic,
+                        bytes_of_data))
+        connection.commit()
+        connection.close()
+        return True
+    except Exception as e:
+        print("Error db: {}".format(e))
+        return False
+    
+    
+    
+
 class NodeDB:
     def __init__(self):
         self.connection = sqlite3.connect('NodeStorage.db', check_same_thread=False)
