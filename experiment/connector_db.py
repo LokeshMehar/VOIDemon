@@ -185,3 +185,15 @@ class DemonDB:
             self.connection.close()
         except Exception as e:
             print(f"Error inserting run_metric_config: {e}")
+    def insert_into_experiment(self, timestamp):
+        try:
+            self.connection = sqlite3.connect('demonDB.db', check_same_thread=False)
+            self.cursor = self.connection.cursor()
+            self.cursor.execute("INSERT INTO experiment (timestamp) VALUES (?)", (timestamp,))
+            to_return = self.cursor.lastrowid
+            self.connection.commit()
+            self.connection.close()
+            return to_return
+        except Exception as e:
+            print("Error DB Insert: {}".format(e))
+            return -1
