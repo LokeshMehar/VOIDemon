@@ -74,38 +74,6 @@ class Experiment:
     def set_db_id(self, param):
         self.db_id = param
 
-def get_target_count(node_count, target_count_range):
-    new_range = []
-    for i in target_count_range:
-        if i <= node_count:
-            new_range.append(i)
-    return new_range
-
-def generate_run(node_count, gossip_rate, target_count, run_count):
-    if experiment.runs:
-        return Run(node_count, gossip_rate, target_count, run_count, node_list=experiment.runs[-1].node_list)
-    return Run(node_count, gossip_rate, target_count, run_count)
-
-def prepare_experiment(server_ip):
-    global experiment
-    experiment = Experiment(json.loads(parser.get('DemonParam', 'node_range')),
-                            json.loads(parser.get('DemonParam', 'gossip_rate_range')),
-                            json.loads(parser.get('DemonParam', 'target_count_range')),
-                            json.loads(parser.get('DemonParam', 'runs')),
-                            server_ip,
-                            parser.get('system_setting', 'is_send_data_back'),
-                            parser.get('DemonParam', 'push_mode'))
-    experiment.set_db_id(experiment.db.insert_into_experiment(time.time()))
-    experiment.query_thread = threading.Thread(target=execute_queries_from_queue)
-    experiment.query_thread.start()
-
-def print_experiment():
-    experiment.query_queue.put(None)
-    experiment.query_thread.join()
-    for run in experiment.runs:
-        print("Run {}, converged after {} messages and {} seconds".format(run.node_count, run.convergence_message_count,
-                                                                          run.convergence_time))
-
 def execute_queries_from_queue():
     while True:
         try:
@@ -126,36 +94,42 @@ def execute_queries_from_queue():
 def save_run_to_database(run):
     run.db_id = experiment.db.insert_into_run(experiment.db_id, run.run, run.node_count, run.gossip_rate,
                                               run.target_count)
+    # NEW: capture metric profile
+    profile_label = parser.get('MetricProfile', 'profile_label', fallback='unspecified')
+    cpu_p = int(parser.get('MetricPriorities', 'cpu_priority', fallback=1))
+    mem_p = int(parser.get('MetricPriorities', 'memory_priority', fallback=5))
+    net_p = int(parser.get('MetricPriorities', 'network_priority', fallback=5))
+    stor_p = int(parser.get('MetricPriorities', 'storage_priority', fallback=10))
+    cpu_d = float(parser.get('MetricDeltas', 'cpu_delta', fallback=5.0))
+    mem_d = float(parser.get('MetricDeltas', 'memory_delta', fallback=7.0))
+    net_d = float(parser.get('MetricDeltas', 'network_delta', fallback=15.0))
+    stor_d = float(parser.get('MetricDeltas', 'storage_delta', fallback=10.0))
+    experiment.db.insert_run_metric_config(run.db_id, profile_label,
+                                           cpu_p, mem_p, net_p, stor_p,
+                                           cpu_d, mem_d, net_d, stor_d)
 
-def save_converged_run_to_database(run):
-    experiment.db.insert_into_converged_run(run.db_id, run.convergence_round, run.convergence_message_count,
-                                            run.convergence_time)
-
-def delete_all_nodes():
-    to_remove = docker_client.containers.list(filters={"ancestor": "demonv1"})
-    for node in to_remove:
-        node.remove(force=True)
-    return "OK"
+def create_and_start_demon_node(node_number, node_list, target_count, gossip_rate):
+    # Add metric priority configuration
+    node_data = {
+        "metric_priorities": {
+            "cpu": int(parser.get('MetricPriorities', 'cpu_priority', fallback=1)),
+            "memory": int(parser.get('MetricPriorities', 'memory_priority', fallback=5)),
+            "network": int(parser.get('MetricPriorities', 'network_priority', fallback=5)),
+            "storage": int(parser.get('MetricPriorities', 'storage_priority', fallback=10))
+        },
+        "metric_deltas": {
+            "cpu": float(parser.get('MetricDeltas', 'cpu_delta', fallback=5.0)),
+            "memory": float(parser.get('MetricDeltas', 'memory_delta', fallback=7.0)),
+            "network": float(parser.get('MetricDeltas', 'network_delta', fallback=15.0)),
+            "storage": float(parser.get('MetricDeltas', 'storage_delta', fallback=10.0))
+        }
+    }
 
 @monitoring_demon.route('/start', methods=['GET'])
 def start_demon():
     server_ip = socket.gethostbyname(socket.gethostname())
     print("Server IP: {}".format(server_ip))
-    global experiment
-    prepare_experiment(server_ip)
-    for node_count in experiment.node_count_range:
-        new_target_count_range = get_target_count(node_count, experiment.target_count_range)
-        for target_count in new_target_count_range:
-            for gossip_rate in experiment.gossip_rate_range:
-                for run_count in range(0, experiment.run_count):
-                    print("Preparing run with {} nodes, {} gossip rate, {} target count and {} run count".format(
-                        node_count, gossip_rate, target_count, run_count))
-                    run = generate_run(node_count, gossip_rate, target_count, run_count)
-                    experiment.runs.append(run)
-                    save_converged_run_to_database(run)
-    print_experiment()
-    delete_all_nodes()
-    return "OK - Experiment finished - bussi k."
+    return "OK - Metrics configuration ready"
 
 if __name__ == "__main__":
     monitoring_demon.run(host='0.0.0.0', port=4000, debug=False, threaded=True)
