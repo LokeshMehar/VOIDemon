@@ -1,6 +1,7 @@
 import sys
 import os
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../')))
+import concurrent.futures
 import configparser
 import json
 import sqlite3
@@ -10,6 +11,7 @@ import socket
 import requests
 import traceback
 from flask import Flask, request
+from joblib import Parallel, delayed
 import connector_db as dbConnector
 import logging
 
@@ -66,11 +68,52 @@ def get_free_port():
     s.close()
     return port
 
+def spawn_node(index, node_list, client, custom_network_name):
+    try:
+        new_node = docker_client.containers.run("demonv1", auto_remove=True, detach=True,
+                                                network_mode=custom_network_name,
+                                                ports={'5000': node_list[index]["port"]})
+    except Exception as e:
+        print("Node not spawned: {}".format(e))
+        print("trace: {}".format(traceback.format_exc()))
+        node_list[index]["port"] = get_free_port()
+        spawn_node(index, node_list, client, custom_network_name)
+    else:
+        node_details = client.containers.get(new_node.id)
+        node_list[index] = {"id": node_details.id,
+                            "ip": node_details.attrs['NetworkSettings']['Networks']['test']['IPAddress'],
+                            "port": node_details.attrs['NetworkSettings']['Ports']['5000/tcp'][0]['HostPort']}
+
+def spawn_multiple_nodes(run):
+    network_name = "test"
+    from_index = 0
+    if run.node_list is None:
+        run.node_list = [None] * run.node_count
+    elif len(run.node_list) == run.node_count:
+        return  # Nodes are already spawned
+    else:
+        from_index = len(run.node_list)
+        run.node_list = run.node_list + [None] * (run.node_count - len(run.node_list))
+    
+    client = docker.DockerClient()
+    for i in range(from_index, run.node_count):
+        run.node_list[i] = {}
+        run.node_list[i]["port"] = get_free_port()
+    
+    Parallel(n_jobs=-1, prefer="threads")(
+        delayed(spawn_node)(i, run.node_list, client, network_name) for i in range(from_index, run.node_count))
+
+def nodes_are_ready(run):
+    for i in range(0, run.node_count):
+        if docker_client.containers.get(run.node_list[i]['id']).status != "running":
+            return False
+    return True
+
 @monitoring_demon.route('/start', methods=['GET'])
 def start_demon():
     server_ip = socket.gethostbyname(socket.gethostname())
     print("Server IP: {}".format(server_ip))
-    return "OK - Database connection ready"
+    return "OK - Node spawning ready"
 
 if __name__ == "__main__":
     monitoring_demon.run(host='0.0.0.0', port=4000, debug=False, threaded=True)
