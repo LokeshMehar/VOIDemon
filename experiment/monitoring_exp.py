@@ -10,6 +10,8 @@ import docker
 import socket
 import requests
 import traceback
+import queue
+import threading
 from flask import Flask, request
 from joblib import Parallel, delayed
 import connector_db as dbConnector
@@ -43,6 +45,8 @@ class Run:
         self.gossip_rate = gossip_rate
         self.target_count = target_count
         self.run = run
+        self.max_round_is_reached = False
+        self.ip_per_ic = {}
 
     def set_db_id(self, param):
         self.db_id = param
@@ -57,88 +61,120 @@ class Experiment:
         self.runs = []
         self.monitoring_address_ip = monitoring_address_ip
         self.db = dbConnector.DemonDB()
+        self.query_queue = queue.Queue()
+        self.query_thread = None
 
     def set_db_id(self, param):
         self.db_id = param
 
-def get_free_port():
-    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    s.bind(('', 0))
-    port = s.getsockname()[1]
-    s.close()
-    return port
+def execute_queries_from_queue():
+    while True:
+        try:
+            conn = sqlite3.connect('demonDB.db', check_same_thread=False)
+            cursor = conn.cursor()
+            query_data = experiment.query_queue.get()
+            if query_data is None:
+                break  # Signal to exit the thread
+            query, parameters = query_data
+            cursor.execute(query, parameters)
+            conn.commit()
+            experiment.query_queue.task_done()
+        except Exception as e:
+            print("Error db: {}".format(e))
+            print("trace: {}".format(traceback.format_exc()))
+            continue
 
-def spawn_node(index, node_list, client, custom_network_name):
-    try:
-        new_node = docker_client.containers.run("demonv1", auto_remove=True, detach=True,
-                                                network_mode=custom_network_name,
-                                                ports={'5000': node_list[index]["port"]})
-    except Exception as e:
-        print("Node not spawned: {}".format(e))
-        print("trace: {}".format(traceback.format_exc()))
-        node_list[index]["port"] = get_free_port()
-        spawn_node(index, node_list, client, custom_network_name)
-    else:
-        node_details = client.containers.get(new_node.id)
-        node_list[index] = {"id": node_details.id,
-                            "ip": node_details.attrs['NetworkSettings']['Networks']['test']['IPAddress'],
-                            "port": node_details.attrs['NetworkSettings']['Ports']['5000/tcp'][0]['HostPort']}
+def run_converged(run):
+    run.convergence_message_count = run.message_count
+    run.convergence_time = (time.time() - run.start_time)
+    if not run.is_converged:
+        print("Convergence time: {}".format(run.convergence_time))
+        print("Convergence message count: {}".format(run.convergence_message_count))
+    run.is_converged = True
 
-def spawn_multiple_nodes(run):
-    network_name = "test"
-    from_index = 0
-    if run.node_list is None:
-        run.node_list = [None] * run.node_count
-    elif len(run.node_list) == run.node_count:
-        return  # Nodes are already spawned
-    else:
-        from_index = len(run.node_list)
-        run.node_list = run.node_list + [None] * (run.node_count - len(run.node_list))
-    
-    client = docker.DockerClient()
-    for i in range(from_index, run.node_count):
-        run.node_list[i] = {}
-        run.node_list[i]["port"] = get_free_port()
-    
-    Parallel(n_jobs=-1, prefer="threads")(
-        delayed(spawn_node)(i, run.node_list, client, network_name) for i in range(from_index, run.node_count))
-
-def nodes_are_ready(run):
-    for i in range(0, run.node_count):
-        if docker_client.containers.get(run.node_list[i]['id']).status != "running":
+def check_convergence(run):
+    if run.is_converged:
+        return True
+    if len(run.data_entries_per_ip) < run.node_count:
+        return False
+    for ip in run.data_entries_per_ip:
+        if len(run.data_entries_per_ip[ip]) < run.node_count:
             return False
-        run.node_list[i]["is_alive"] = True
-    return True
+        if len(run.data_entries_per_ip[ip]) > run.node_count:
+            return False
+        for node_data in run.data_entries_per_ip[ip]:
+            if "counter" not in run.data_entries_per_ip[ip][node_data]:
+                return False
+    run_converged(run)
 
-def start_node(index, run, database_address, monitoring_address, ip):
-    to_send = {"node_list": run.node_list, "target_count": run.target_count, "gossip_rate": run.gossip_rate,
-               "database_address": database_address, "monitoring_address": monitoring_address,
-               "node_ip": run.node_list[index]["ip"]}
-    try:
-        time.sleep(0.01)
-        requests.post("http://{}:{}/start_node".format(ip, run.node_list[index]["port"]), json=to_send)
-    except Exception as e:
-        print("Node not started: {}".format(e))
-        start_node(index, run, database_address, monitoring_address, ip)
+def save_run_to_database(run):
+    run.db_id = experiment.db.insert_into_run(experiment.db_id, run.run, run.node_count, run.gossip_rate,
+                                              run.target_count)
 
-def restart_node(docker_id):
-    try:
-        docker_client.containers.get(docker_id).restart()
-    except Exception as e:
-        print("An error occurred while restarting the container: {}".format(e))
+def save_converged_run_to_database(run):
+    experiment.db.insert_into_converged_run(run.db_id, run.convergence_round, run.convergence_message_count,
+                                            run.convergence_time)
 
-@monitoring_demon.route('/delete_nodes', methods=['GET'])
-def delete_all_nodes():
-    to_remove = docker_client.containers.list(filters={"ancestor": "demonv1"})
-    for node in to_remove:
-        node.remove(force=True)
+@monitoring_demon.route('/receive_ic', methods=['GET'])
+def update_ic():
+    client_ip = request.args['ip']
+    client_port = request.args['port']
+    experiment.runs[-1].ip_per_ic[client_ip + ":" + client_port] = True
+    if len(experiment.runs[-1].ip_per_ic) == experiment.runs[-1].node_count:
+        run_converged(experiment.runs[-1])
+    return "OK"
+
+@monitoring_demon.route('/receive_node_data', methods=['POST'])
+def update_data_entries_per_ip():
+    global experiment
+    if not experiment:
+        print("No experiment running, but a gossip node is trying to send data")
+        return "NOK"
+    
+    client_ip = request.args['ip']
+    client_port = request.args['port']
+    round = request.args['round']
+    inc = request.get_json()
+    data_stored_in_node = inc["data"]
+    data_flow_per_round = inc["data_flow_per_round"]
+
+    nd = data_flow_per_round.setdefault('nd', 0)
+    fd = data_flow_per_round.setdefault('fd', 0)
+    rm = data_flow_per_round.setdefault('rm', 0)
+
+    ic = len(data_stored_in_node)
+    bytes_of_data = len(json.dumps(data_stored_in_node).encode('utf-8'))
+
+    experiment.runs[-1].convergence_round = max(experiment.runs[-1].convergence_round, int(round))
+    experiment.runs[-1].message_count += 1
+    experiment.runs[-1].data_entries_per_ip[client_ip + ":" + client_port] = data_stored_in_node
+    
+    if not experiment.runs[-1].is_converged:
+        if int(nd) > experiment.runs[-1].node_count:
+            nd = experiment.runs[-1].node_count
+        if int(fd) > experiment.runs[-1].node_count:
+            fd = experiment.runs[-1].node_count
+        
+        delete_parameters = (experiment.runs[-1].db_id, client_ip, client_port, round)
+        insert_parameters = (experiment.runs[-1].db_id, client_ip, client_port, round, nd, fd, rm, ic, bytes_of_data)
+        
+        experiment.query_queue.put(
+            ("DELETE FROM round_of_node WHERE run_id = ? AND ip = ? AND port = ? AND round = ?", delete_parameters))
+        experiment.query_queue.put((
+            "INSERT INTO round_of_node (run_id, ip, port, round, nd, fd, rm, ic, bytes_of_data) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            insert_parameters))
+    
+    check_convergence(experiment.runs[-1])
+    if int(round) >= 80:
+        run_converged(experiment.runs[-1])
+        experiment.runs[-1].max_round_is_reached = True
     return "OK"
 
 @monitoring_demon.route('/start', methods=['GET'])
 def start_demon():
     server_ip = socket.gethostbyname(socket.gethostname())
     print("Server IP: {}".format(server_ip))
-    return "OK - Node management ready"
+    return "OK - Convergence logic ready"
 
 if __name__ == "__main__":
     monitoring_demon.run(host='0.0.0.0', port=4000, debug=False, threaded=True)
