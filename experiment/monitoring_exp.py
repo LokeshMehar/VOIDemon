@@ -107,13 +107,38 @@ def nodes_are_ready(run):
     for i in range(0, run.node_count):
         if docker_client.containers.get(run.node_list[i]['id']).status != "running":
             return False
+        run.node_list[i]["is_alive"] = True
     return True
+
+def start_node(index, run, database_address, monitoring_address, ip):
+    to_send = {"node_list": run.node_list, "target_count": run.target_count, "gossip_rate": run.gossip_rate,
+               "database_address": database_address, "monitoring_address": monitoring_address,
+               "node_ip": run.node_list[index]["ip"]}
+    try:
+        time.sleep(0.01)
+        requests.post("http://{}:{}/start_node".format(ip, run.node_list[index]["port"]), json=to_send)
+    except Exception as e:
+        print("Node not started: {}".format(e))
+        start_node(index, run, database_address, monitoring_address, ip)
+
+def restart_node(docker_id):
+    try:
+        docker_client.containers.get(docker_id).restart()
+    except Exception as e:
+        print("An error occurred while restarting the container: {}".format(e))
+
+@monitoring_demon.route('/delete_nodes', methods=['GET'])
+def delete_all_nodes():
+    to_remove = docker_client.containers.list(filters={"ancestor": "demonv1"})
+    for node in to_remove:
+        node.remove(force=True)
+    return "OK"
 
 @monitoring_demon.route('/start', methods=['GET'])
 def start_demon():
     server_ip = socket.gethostbyname(socket.gethostname())
     print("Server IP: {}".format(server_ip))
-    return "OK - Node spawning ready"
+    return "OK - Node management ready"
 
 if __name__ == "__main__":
     monitoring_demon.run(host='0.0.0.0', port=4000, debug=False, threaded=True)
