@@ -565,8 +565,5 @@ def create_and_start_demon_node(node_number, node_list, target_count, gossip_rat
         }
     }
     
-    # Continue with existing code...
-
-
 if __name__ == "__main__":
     monitoring_demon.run(host='0.0.0.0', port=4000, debug=False, threaded=True)
