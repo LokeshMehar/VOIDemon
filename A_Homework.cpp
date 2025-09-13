@@ -16,7 +16,8 @@ int main(){
         string temp,f="",b="";
         cin>>temp;
         int i=0;
-        for(char c : temp){
+        for(char c : temp)
+        {
             if(c=='V')f+=p[i++];
             else b+=p[i++];
         }
