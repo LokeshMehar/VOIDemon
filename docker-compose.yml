@@ -1,0 +1,21 @@
+# VOIDemon Docker Compose
+
+# Builds the voidemon-node Docker image and sets up the gossip network.
+# The orchestrator (experiments/orchestrator.py) spawns node containers at
+# runtime — this file only needs to build the image and create the network.
+
+services:
+  # This service exists solely to build the voidemon-node image.
+  # Actual gossip node containers are spawned dynamically by orchestrator.py.
+  voidemon-builder:
+    build:
+      context: ./src/app
+      dockerfile: Dockerfile
+    image: voidemon-node
+    entrypoint: ["echo", "VOIDemon node image built successfully"]
+
+networks:
+  # The 'test' overlay network that orchestrator.py expects
+  default:
+    name: test
+    driver: bridge
