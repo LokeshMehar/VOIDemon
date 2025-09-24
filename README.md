@@ -19,3 +19,24 @@
 ---
 
 ## 🚀 Quick Start
+
+Want to see it in action immediately? You need Docker, Python 3.9+, and Node 18+ installed on your host machine.
+
+```bash
+# 1. Clone the repository
+git clone https://github.com/LokeshMehar/VOIDemon.git
+cd VOIDemon
+
+# 2. Build the Docker Image for the edge nodes
+docker-compose up --build -d
+
+# 3. Install backend dependencies and boot Orchestrator
+pip install -r requirements.txt
+python experiments/orchestrator.py
+```
+
+Open two more terminals for the Dashboard:
+```bash
+# Terminal A (API Gateway)
+cd dashboard/api && npm install && npm start
+
