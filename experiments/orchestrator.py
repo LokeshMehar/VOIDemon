@@ -52,3 +52,21 @@ def update_data_entries_per_ip():
     client_ip = request.args['ip']
     client_port = request.args['port']
     round_num = request.args['round']
+    inc = request.get_json()
+    data_stored_in_node = inc["data"]
+    data_flow_per_round = inc["data_flow_per_round"]
+
+    nd = data_flow_per_round.setdefault('nd', 0)
+    fd = data_flow_per_round.setdefault('fd', 0)
+    rm = data_flow_per_round.setdefault('rm', 0)
+
+    ic = len(data_stored_in_node)
+    bytes_of_data = len(json.dumps(data_stored_in_node).encode('utf-8'))
+
+    with run_lock:
+        experiment.runs[-1].convergence_round = max(experiment.runs[-1].convergence_round, int(round_num))
+        experiment.runs[-1].message_count += 1
+        experiment.runs[-1].data_entries_per_ip[client_ip + ":" + client_port] = data_stored_in_node
+        check_convergence(experiment.runs[-1], data_stored_in_node)
+        if int(round_num) >= 80:
+            run_converged(experiment.runs[-1])
