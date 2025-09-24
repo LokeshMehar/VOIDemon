@@ -1,0 +1,19 @@
+## Description
+<!-- Please describe the motivation and scope of this PR -->
+
+## Related Issue
+<!-- If fixing a bug or implementing a feature, please link it here (e.g., Fixes #123) -->
+
+## Motivation and Context
+<!-- Why is this change required? What problem does it solve? -->
+
+## How Has This Been Tested?
+<!-- Please describe in detail how you tested your changes. -->
+<!-- Include details of your testing environment, and the tests you ran to -->
+<!-- see how your change affects other areas of the code, etc. -->
+
+## Screenshots (if applicable, for dashboard changes):
+
+## Types of changes
+<!-- What types of changes does your code introduce? Put an `x` in all the boxes that apply: -->
+- [ ] Bug fix (non-breaking change which fixes an issue)

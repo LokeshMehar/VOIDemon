@@ -34,3 +34,21 @@ def notify_node_killed():
 
 @orchestrator.route('/receive_ic', methods=['GET'])
 def update_ic():
+    client_ip = request.args['ip']
+    client_port = request.args['port']
+    with run_lock:
+        experiment.runs[-1].ip_per_ic[client_ip + ":" + client_port] = True
+        if len(experiment.runs[-1].ip_per_ic) == experiment.runs[-1].node_count:
+            run_converged(experiment.runs[-1])
+    return "OK"
+
+
+@orchestrator.route('/receive_node_data', methods=['POST'])
+def update_data_entries_per_ip():
+    """Receive per-round metric and flow data from a gossip node."""
+    if not experiment:
+        print("No experiment running, but a gossip node sent data")
+        return "NOK"
+    client_ip = request.args['ip']
+    client_port = request.args['port']
+    round_num = request.args['round']

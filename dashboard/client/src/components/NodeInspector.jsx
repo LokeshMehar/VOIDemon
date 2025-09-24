@@ -24,3 +24,29 @@
           </div>
           <div className="grid grid-cols-2 gap-2.5">
             <ResourceCard label="CPU"      value={cpu}     unit="%" isFiltered={isCpuFiltered}     icon={mkIcon(icons.cpu)}  />
+            <ResourceCard label="Memory"   value={memory}  unit="%" isFiltered={isMemoryFiltered}  icon={mkIcon(icons.mem)}  />
+            <ResourceCard label="Network"  value={network} unit="Mbps" isFiltered={isNetworkFiltered} icon={mkIcon(icons.net)}  />
+            <ResourceCard label="Storage"  value={storage} unit="%" isFiltered={isStorageFiltered} icon={mkIcon(icons.disk)} />
+          </div>
+        </section>
+
+        {/* Convergence */}
+        <section className="bg-slate-900/50 rounded-2xl p-4 border border-white/5 space-y-4">
+          <h4 className="text-[9px] font-black text-indigo-400 uppercase tracking-[0.25em]">Gossip Convergence</h4>
+
+          {/* Progress */}
+          <div>
+            <div className="flex justify-between items-center mb-2">
+              <span className="text-[10px] text-slate-500">Progress</span>
+              <span className="text-[10px] font-mono font-bold text-white">{Math.min(node.ic ?? 0, activeNodeCount)} / {activeNodeCount}</span>
+            </div>
+            <div className="w-full h-1.5 bg-slate-800 rounded-full overflow-hidden">
+              <div
+                className={`h-full rounded-full bar-animate transition-all duration-500 ${isConverged ? "bg-emerald-500" : "bg-indigo-500"}`}
+                style={{ width: `${convergePct}%` }}
+              />
+            </div>
+          </div>
+
+          {/* Stats grid */}
+          <div className="grid grid-cols-2 gap-3">
