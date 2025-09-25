@@ -40,3 +40,24 @@ Open two more terminals for the Dashboard:
 # Terminal A (API Gateway)
 cd dashboard/api && npm install && npm start
 
+# Terminal B (React Client)
+cd dashboard/client && npm install && npm run dev
+```
+
+Finally, open your browser to [**http://localhost:5173**](http://localhost:5173) and click **"BOOT DISTRIBUTED NETWORK"** to watch the real-time simulation begin!
+
+---
+
+## 📈 Analytics Generation
+
+Once a simulation run concludes (the Orchestrator logs will report `OK - Experiment finished`), you can generate beautiful Matplotlib visualizations detailing the VoI efficiency and convergence times:
+
+```bash
+python experiments/analytics.py
+```
+
+This will parse the SQLite WAL database and output high-res `.png` charts into the `experiments/` directory.
+
+---
+
+## 🤝 Contributing
