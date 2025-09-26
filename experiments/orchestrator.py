@@ -70,3 +70,21 @@ def update_data_entries_per_ip():
         check_convergence(experiment.runs[-1], data_stored_in_node)
         if int(round_num) >= 80:
             run_converged(experiment.runs[-1])
+from src import query_client
+
+session = requests.Session()
+
+orchestrator = Flask(__name__)
+parser = configparser.ConfigParser()
+parser.read(os.path.join(os.path.dirname(__file__), 'config.ini'))
+try:
+    docker_client = docker.client.from_env()
+except Exception as e:
+    print("Error connecting to Docker: {}".format(e))
+    print("trace: {}".format(traceback.format_exc()))
+    exit(1)
+
+experiment = None
+# Protects concurrent reads/writes to run state from Flask threads
+run_lock = threading.Lock()
+
