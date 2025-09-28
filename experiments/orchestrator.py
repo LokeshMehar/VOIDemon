@@ -88,3 +88,39 @@ experiment = None
 # Protects concurrent reads/writes to run state from Flask threads
 run_lock = threading.Lock()
 
+
+def execute_queries_from_queue():
+    """
+    Dedicated SQLite writer thread — drains the query_queue in batches.
+
+    Batching (commit every N items or when the queue drains temporarily) amortises
+    the fsync cost of WAL-mode writes without losing data. On failure the
+    transaction is rolled back, the cursor is recreated (a stale cursor after
+    rollback can produce silent failures in SQLite's Python driver), and the
+    failed batch is discarded — individual items are marked task_done so
+    join() callers are never left hanging.
+    """
+    db_path = os.path.join(os.path.dirname(__file__), db.DB_FILE)
+    conn = sqlite3.connect(db_path, check_same_thread=False)
+    cursor = conn.cursor()
+
+    batch_size = 50
+    pending_items = []
+            experiment.runs[-1].max_round_is_reached = True
+
+    if not experiment.runs[-1].is_converged:
+        current_node_count = int(experiment.runs[-1].node_count)
+        if int(nd) > current_node_count:
+            nd = current_node_count
+        if int(fd) > current_node_count:
+            fd = current_node_count
+        delete_parameters = (experiment.runs[-1].db_id, client_ip, client_port, round_num)
+        insert_parameters = (experiment.runs[-1].db_id, client_ip, client_port, round_num, nd, fd, rm, ic, bytes_of_data)
+        experiment.query_queue.put(
+            ("DELETE FROM round_of_node WHERE run_id = ? AND ip = ? AND port = ? AND round = ?", delete_parameters))
+        experiment.query_queue.put((
+            "INSERT INTO round_of_node (run_id, ip, port, round, nd, fd, rm, ic, bytes_of_data) "
+            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            insert_parameters
+        ))
+
