@@ -124,3 +124,21 @@ def execute_queries_from_queue():
             insert_parameters
         ))
 
+    # Store VoI metrics statistics
+    metrics_sent = data_flow_per_round.get('metrics_sent', 0)
+    metrics_filtered = data_flow_per_round.get('metrics_filtered', 0)
+    if metrics_sent > 0 or metrics_filtered > 0:
+        metrics_params = (experiment.runs[-1].db_id, client_ip, client_port, round_num,
+                          metrics_sent, metrics_filtered, time.time())
+        experiment.query_queue.put((
+            "INSERT INTO round_metrics_stats (run_id, node_ip, node_port, round, metrics_sent, metrics_filtered, timestamp) "
+            "VALUES (?, ?, ?, ?, ?, ?, ?)",
+            metrics_params
+        ))
+
+    # Store per-metric transmission detail
+    if client_ip + ":" + client_port in data_stored_in_node:
+        node_data = data_stored_in_node[client_ip + ":" + client_port]
+        if 'metric_sent_flags' in node_data:
+            timestamp = time.time()
+            for metric_type, was_sent in node_data['metric_sent_flags'].items():
