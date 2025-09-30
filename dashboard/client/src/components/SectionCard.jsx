@@ -36,3 +36,41 @@ const DEFAULT_META = {
   gradient: "from-slate-500/15 to-slate-700/10",
   border:   "border-slate-500/25",
   dot:      "bg-slate-400",
+  text:     "text-slate-400",
+  ring:     "focus:ring-slate-500/30 focus:border-slate-500/40",
+  icon: "M4 6h16M4 12h16M4 18h16",
+};
+
+/**
+ * SectionCard — renders one INI section with editable text inputs.
+ * Keys starting with ";" are treated as comments and skipped.
+ */
+export function SectionCard({ sectionKey, sectionData, onChange }) {
+  const meta = SECTION_META[sectionKey] || DEFAULT_META;
+
+  return (
+    <div className={`glass rounded-2xl border ${meta.border} overflow-hidden transition-all duration-300 hover:border-opacity-50 flex flex-col`}>
+      {/* Header */}
+      <div className={`bg-gradient-to-r ${meta.gradient} px-5 py-3.5 border-b ${meta.border} flex items-center gap-3`}>
+        <div className={`w-6 h-6 rounded-lg bg-black/20 flex items-center justify-center`}>
+          <svg className={`w-3.5 h-3.5 ${meta.text}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d={meta.icon} />
+          </svg>
+        </div>
+        <h3 className={`text-[10px] font-black uppercase tracking-[0.25em] ${meta.text}`}>
+          {sectionKey.replace(/_/g, " ")}
+        </h3>
+      </div>
+
+      {/* Fields */}
+      <div className="p-5 flex flex-col gap-4">
+        {Object.entries(sectionData).map(([key, value]) => {
+          if (key.startsWith(";")) return null;
+
+          const inputId = `${sectionKey}__${key}`;
+          const strVal  = value === null || value === undefined ? "" : String(value);
+
+          return (
+            <div key={key} className="flex flex-col gap-1.5">
+              <label htmlFor={inputId} className="text-[9px] font-bold text-slate-500 uppercase tracking-widest pl-0.5">
+                {sectionLabel(key)}

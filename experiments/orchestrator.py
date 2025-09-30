@@ -142,3 +142,21 @@ def execute_queries_from_queue():
         if 'metric_sent_flags' in node_data:
             timestamp = time.time()
             for metric_type, was_sent in node_data['metric_sent_flags'].items():
+                metric_value = None
+                if 'appState' in node_data and metric_type in node_data['appState']:
+                    try:
+                        metric_value = float(node_data['appState'][metric_type])
+                    except (ValueError, TypeError):
+                        pass
+                metric_params = (experiment.runs[-1].db_id, client_ip, client_port, round_num,
+                                 metric_type, 1 if was_sent else 0, metric_value, timestamp)
+                experiment.query_queue.put((
+                    "INSERT INTO metric_transmissions (run_id, node_ip, node_port, round, metric_type, was_sent, metric_value, timestamp) "
+                    "VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+                    metric_params
+                ))
+
+    current_run = experiment.runs[-1]
+
+    # Forward live metrics to the Express dashboard API (non-blocking)
+    def _forward_to_dashboard():
