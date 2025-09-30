@@ -160,3 +160,21 @@ def execute_queries_from_queue():
 
     # Forward live metrics to the Express dashboard API (non-blocking)
     def _forward_to_dashboard():
+        try:
+            peer_status = {}
+            for peer, p_data in data_stored_in_node.items():
+                if "hbState" in p_data:
+                    peer_status[peer] = {
+                        "isAlive": p_data["hbState"].get("nodeAlive", True),
+                        "failCount": p_data["hbState"].get("failureCount", 0)
+                    }
+                else:
+                    peer_status[peer] = {"isAlive": True, "failCount": 0}
+
+            sender_key = client_ip + ":" + client_port
+            sender_entry = data_stored_in_node.get(sender_key, {})
+            app_state = sender_entry.get("appState", {})
+
+            # Filter out manually killed nodes from the topology view
+            filtered_data = {k: v for k, v in data_stored_in_node.items() if k not in current_run.killed_node_keys}
+            active_ic = sum(1 for p, d in filtered_data.items() if d.get("hbState", {}).get("nodeAlive", True))
