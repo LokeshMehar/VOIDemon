@@ -1,0 +1,30 @@
+# ── SQLite databases (auto-created at runtime) ──────────────────────────────
+*.db
+*.db-shm
+*.db-wal
+
+# ── Python ───────────────────────────────────────────────────────────────────
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.pyi
+venv/
+.env
+
+# ── Node / JS ────────────────────────────────────────────────────────────────
+node_modules/
+dashboard/client/dist/
+
+# ── IDE / OS ─────────────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+# ── Docs / Notes ─────────────────────────────────────────────────────────────
+notes.md
+docs/performance_defense_guide.md
+
+# ── Analytics output (generated at runtime) ──────────────────────────────────
+experiments/*.png
