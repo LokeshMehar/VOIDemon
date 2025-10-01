@@ -1,0 +1,8 @@
+# experiment orchestrator dependencies (run from project root)
+Flask>=2.0
+werkzeug>=2.0
+requests>=2.27
+docker>=6.1
+joblib>=1.2
+matplotlib>=3.7
+numpy>=2.0
