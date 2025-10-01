@@ -50,3 +50,29 @@
 
           {/* Stats grid */}
           <div className="grid grid-cols-2 gap-3">
+            {[
+              { label: "Round",     value: node.round ?? 0 },
+              { label: "Peers",     value: node.nd ?? 0    },
+              { label: "Messages",  value: nodeTotal         },
+              { label: "Filtered",  value: nodeFiltered      },
+            ].map(({ label, value }) => (
+              <div key={label} className="bg-slate-800/40 rounded-xl p-3 border border-white/[0.04]">
+                <p className="text-[9px] font-bold text-slate-600 uppercase tracking-wider mb-1">{label}</p>
+                <p className="text-sm font-mono font-black text-white">{value.toLocaleString()}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+
+      </div>
+
+      {/* ── Footer ────────────────────────────────────────────────────────────── */}
+      <div className="px-5 py-4 border-t border-white/5 bg-black/20">
+        <div className="flex items-center justify-between">
+          <span className="text-[9px] font-mono text-slate-700">PORT: {nodeId.split(":").pop()}</span>
+          <div className="flex items-center gap-1.5">
+            <div className="w-1 h-1 rounded-full bg-emerald-500 animate-pulse" />
+            <span className="text-[9px] font-mono text-emerald-700 font-bold">LIVE</span>
+          </div>
+        </div>
+      </div>
