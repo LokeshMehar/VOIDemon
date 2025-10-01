@@ -178,3 +178,21 @@ def execute_queries_from_queue():
             # Filter out manually killed nodes from the topology view
             filtered_data = {k: v for k, v in data_stored_in_node.items() if k not in current_run.killed_node_keys}
             active_ic = sum(1 for p, d in filtered_data.items() if d.get("hbState", {}).get("nodeAlive", True))
+
+    while True:
+        query_data = None
+        try:
+            query_data = experiment.query_queue.get()
+            if query_data is None:
+                # Poison pill — flush remaining batch and exit
+                if pending_items:
+                    conn.commit()
+                    for _ in pending_items:
+                        experiment.query_queue.task_done()
+                    pending_items = []
+                experiment.query_queue.task_done()
+                break
+
+            sql, parameters = query_data
+            cursor.execute(sql, parameters)
+            pending_items.append(query_data)
