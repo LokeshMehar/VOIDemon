@@ -32,3 +32,20 @@ class NodeDB:
                 value TEXT
             )
         ''')
+        self.cursor.execute('''
+            CREATE TABLE IF NOT EXISTS data_entries (
+                id INTEGER PRIMARY KEY,
+                node TEXT,
+                round INTEGER,
+                key TEXT,
+                unique_entry_id INTEGER,
+                FOREIGN KEY (unique_entry_id) REFERENCES unique_entries(id)
+            )
+        ''')
+        self.connection.commit()
+        self.connection.close()
+
+    def get_connection(self):
+        return sqlite3.connect('node_storage.db', check_same_thread=False)
+
+
