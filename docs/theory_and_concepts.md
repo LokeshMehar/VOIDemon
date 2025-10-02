@@ -54,3 +54,31 @@ Where:
 
 The standard gossip protocol is incredibly robust but prohibitively resource-intensive. Disseminating a node's complete state in every cycle leads to transmitting redundant information, draining battery life and clogging bandwidth.
 
+VOIDemon's core innovation is the **Value of Information (VoI)** metric filtering system.
+
+### 3.1 Tiered Priority Logic
+Metrics are assigned to priority tiers based on operational criticality and expected volatility:
+- **HIGH Priority (e.g., CPU):** Critical for real-time visibility. Always transmitted.
+- **MEDIUM Priority (e.g., Network I/O):** Transmitted only if the change exceeds a specific delta ($\Delta$) threshold, or a specific time interval has passed.
+- **LOW Priority (e.g., Storage Capacity):** Rarely changes. Heavily filtered and updated infrequently.
+
+```mermaid
+flowchart TD
+    A[New Gossip Round] --> B{Is Metric Priority HIGH?}
+    B -- Yes --> C[Transmit Metric]
+    B -- No --> D{Is Priority MEDIUM or LOW?}
+    D -- Yes --> E{Time since last update ≥ Threshold?}
+    E -- Yes --> C
+    E -- No --> F{Value Delta > Δ Threshold?}
+    F -- Yes --> C
+    F -- No --> G[Filter / Suppress Metric]
+```
+
+### 3.2 Formal Transmission Decision
+The decision to transmit a specific metric $m$ is governed by a boolean function $T(m, i, t)$:
+
+$$
+T(m, i, t) = \begin{cases} 
+1, & \text{if } P(m) = \text{HIGH} \\
+1, & \text{if } P(m) \in \{\text{MED, LOW}\} \land (t - t_{last} \geq k_p \lor |v_i(t) - v_{last}| > \Delta_p) \\
+0, & \text{otherwise} 
