@@ -76,3 +76,29 @@
           </div>
         </div>
       </div>
+import React from "react";
+import { ResourceCard } from "./ResourceCard";
+
+/**
+ * NodeInspector — slide-in right-panel showing real-time diagnostics
+ * for the selected node.
+ *
+ * Props:
+ *   nodeId            — "ip:port" string
+ *   nodesInfo         — Object map of nodeId → node data (from graphData.nodes_info)
+ *   onClose           — callback to deselect
+ *   killedNodes       — Set<string> of manually/auto-killed node IDs
+ */
+export function NodeInspector({ nodeId, nodesInfo, onClose, killedNodes }) {
+  const node = nodesInfo[nodeId];
+  if (!node) return null;
+
+  const appState = node.appState || {};
+  const isKilled = node.isDead || killedNodes.has(nodeId);
+
+  const cpu     = appState.cpu     ?? "—";
+  const memory  = appState.memory  ?? "—";
+  const network = appState.network ?? "—";
+  const storage = appState.storage ?? "—";
+
+  const isCpuFiltered     = appState._isCpuFiltered;

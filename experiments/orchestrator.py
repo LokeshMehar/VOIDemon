@@ -196,3 +196,21 @@ def execute_queries_from_queue():
             sql, parameters = query_data
             cursor.execute(sql, parameters)
             pending_items.append(query_data)
+            filtered_nd = len(filtered_data)
+
+            payload = {
+                "ip": client_ip,
+                "port": client_port,
+                "round": round_num,
+                "ic": active_ic,
+                "nd": filtered_nd,
+                "fd": fd,
+                "rm": rm,
+                "bytes_of_data": bytes_of_data,
+                "node_count": current_run.node_count,
+                "active_target": current_run.node_count - current_run.manually_killed_count,
+                "message_count": current_run.message_count,
+                "is_converged": current_run.is_converged,
+                "data_stored_in_node": list(filtered_data.keys()),
+                "peer_status": peer_status,
+                "cpu":     app_state.get("cpu",     "not_updated"),
