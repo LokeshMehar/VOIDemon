@@ -214,3 +214,21 @@ def execute_queries_from_queue():
                 "data_stored_in_node": list(filtered_data.keys()),
                 "peer_status": peer_status,
                 "cpu":     app_state.get("cpu",     "not_updated"),
+                "memory":  app_state.get("memory",  "not_updated"),
+                "network": app_state.get("network", "not_updated"),
+                "storage": app_state.get("storage", "not_updated"),
+            }
+            requests.post("http://localhost:5000/api/live-metrics", json=payload, timeout=2)
+        except Exception:
+            pass  # Dashboard may not be running; never block the experiment
+
+    threading.Thread(target=_forward_to_dashboard, daemon=True).start()
+    return "OK"
+
+
+def generate_run(node_count, gossip_rate, target_count, run_count):
+    if experiment.runs:
+        return Run(node_count, gossip_rate, target_count, run_count, node_list=experiment.runs[-1].node_list)
+    return Run(node_count, gossip_rate, target_count, run_count)
+
+

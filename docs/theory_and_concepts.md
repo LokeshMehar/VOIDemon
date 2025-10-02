@@ -26,3 +26,31 @@ To achieve true decentralization, VOIDemon leverages a **Stochastic Gossip (or E
 VOIDemon implements a highly efficient push-pull gossip variant. In each discrete time step (gossip round $t$), a node $n_i$ selects a random peer $n_j$ and initiates a synchronization cycle:
 
 ```mermaid
+sequenceDiagram
+    participant Node A (Initiator)
+    participant Node B (Target)
+    
+    Node A->>Node B: 1. Metadata Push (Counters & Hashes)
+    Note right of Node B: Compares received metadata<br/>with local database DB_B
+    Node B-->>Node A: 2. Request stale state (Pull)
+    Node B->>Node A: 3. Send fresher state (Push)
+    Node A-->>Node B: 4. Fulfill Pull Request
+    Note left of Node A: Both nodes achieve<br/>synchronized state
+```
+
+This bidirectional exchange in a single round-trip ensures rapid and efficient synchronization. The state of node $n_i$ at time $t$ is encapsulated in a formal data tuple:
+
+$$ S_i(t) = \{ M_i(t), C_i(t), H_i(t), D_i(t) \} $$
+
+Where:
+- **$M_i(t)$:** Vector of $Z$ system metrics (CPU, Memory, etc.).
+- **$C_i(t)$:** A monotonically increasing integer counter (version number).
+- **$H_i(t)$:** A timestamp for liveness detection (heartbeat).
+- **$D_i(t)$:** A cryptographic hash (SHA-256) of the metric vector $M_i(t)$ to quickly determine staleness without deeply comparing payload contents.
+
+---
+
+## 3. Value of Information (VoI) Priority Filtering
+
+The standard gossip protocol is incredibly robust but prohibitively resource-intensive. Disseminating a node's complete state in every cycle leads to transmitting redundant information, draining battery life and clogging bandwidth.
+

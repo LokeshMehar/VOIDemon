@@ -102,3 +102,6 @@ export function NodeInspector({ nodeId, nodesInfo, onClose, killedNodes }) {
   const storage = appState.storage ?? "—";
 
   const isCpuFiltered     = appState._isCpuFiltered;
+    </div>
+  );
+}
