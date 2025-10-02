@@ -32,3 +32,37 @@ def query(node_list, quorum_size, target_node_ip, target_node_port, docker_ip):
     Returns:
         Tuple of (total_messages_sent, query_result_dict).
 
+    Raises:
+        RuntimeError: If quorum consensus is never reached within MAX_QUERY_RETRIES.
+    """
+    def build_url(node, path):
+        host = docker_ip if docker_ip else node["ip"]
+        return f"http://{host}:{node['port']}{path}"
+
+    target_key = f"{target_node_ip}:{target_node_port}"
+
+    for attempt in range(MAX_QUERY_RETRIES):
+        # 1. Sample a random quorum of peers
+        random_nodes = random.sample(node_list, quorum_size)
+
+        metadatas = {}
+        total_messages = 0
+
+        # 2. Gather metadata (counter + digest) from each quorum member
+        for node in random_nodes:
+            total_messages += 1
+            try:
+                resp = requests.get(build_url(node, "/metadata"), timeout=5)
+                resp.raise_for_status()
+                data = resp.json()[target_key]
+                metadatas[f"{node['ip']}:{node['port']}"] = data
+            except Exception as e:
+                print(f"[QuorumQuery] Node {node['ip']}:{node['port']} not responding: {e}")
+
+        # 3. Full quorum must have replied
+        if len(metadatas) == quorum_size:
+            # Counter consensus
+            counters = [d["counter"] for d in metadatas.values()]
+            if len(set(counters)) == 1:
+                # Digest consensus — guarantees identical data
+                digests = [d["digest"] for d in metadatas.values()]

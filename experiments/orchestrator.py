@@ -232,3 +232,21 @@ def generate_run(node_count, gossip_rate, target_count, run_count):
     return Run(node_count, gossip_rate, target_count, run_count)
 
 
+
+            # Commit when the batch is full or the queue is temporarily empty
+            if len(pending_items) >= batch_size or experiment.query_queue.empty():
+                conn.commit()
+                for _ in pending_items:
+                    experiment.query_queue.task_done()
+                pending_items = []
+
+        except sqlite3.Error as e:
+            print("Error in DB batch write: {}".format(e))
+            print("trace: {}".format(traceback.format_exc()))
+            try:
+                conn.rollback()
+            except sqlite3.Error as rollback_err:
+                print("Error during rollback: {}".format(rollback_err))
+
+            # Recreate cursor — a cursor after rollback can be in an undefined
+            # state in SQLite's Python driver.
