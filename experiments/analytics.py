@@ -27,3 +27,32 @@ def plot_bandwidth_savings_over_time(analytics_db):
     plt.xlabel('Gossip Round')
     plt.ylabel('Number of Metrics')
     plt.title('VOIDemon: Metric Transmission Over Time (VoI Bandwidth Savings)')
+    plt.legend()
+    plt.grid(True)
+    plt.savefig('bandwidth_savings_over_time.png')
+    print("Saved bandwidth_savings_over_time.png")
+
+
+def plot_total_bandwidth_saved(analytics_db):
+    data = analytics_db.get_total_bandwidth_saved()
+    if not data or data == (None, None) or (data[0] == 0 and data[1] == 0):
+        print("No data for Total Bandwidth Saved Pie Chart.")
+        return
+
+    sent, filtered = data
+    labels = ['Metrics Transmitted', 'Metrics Filtered (VoI Saved)']
+    sizes = [sent, filtered]
+    colors = ['#ff9999', '#66b3ff']
+
+    plt.figure(figsize=(8, 8))
+    plt.pie(sizes, labels=labels, colors=colors, autopct='%1.1f%%', startangle=90)
+    plt.title('VOIDemon: Total VoI Bandwidth Savings')
+    plt.axis('equal')
+    plt.savefig('total_bandwidth_saved.png')
+    print("Saved total_bandwidth_saved.png")
+
+
+def plot_transmissions_by_metric_type(analytics_db):
+    data = analytics_db.get_transmissions_by_metric_type()
+    if not data:
+        print("No data for Transmissions By Metric Type.")

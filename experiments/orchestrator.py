@@ -268,3 +268,21 @@ def prepare_experiment(server_ip):
 
     # Reload config to pick up any dashboard-side changes
     parser.read(os.path.join(os.path.dirname(__file__), 'config.ini'))
+
+    def get_range(section, key):
+        return ensure_list(parser.get(section, key))
+
+    node_range = get_range('VOIDemonParam', 'node_range')
+    gossip_rate_range = get_range('VOIDemonParam', 'gossip_rate_range')
+    target_count_range = get_range('VOIDemonParam', 'target_count_range')
+    runs = int(parser.get('VOIDemonParam', 'runs'))
+
+    experiment = Experiment(
+        node_range, gossip_rate_range, target_count_range, runs, server_ip,
+        parser.get('system_setting', 'is_send_data_back'),
+        parser.get('VOIDemonParam', 'push_mode')
+    )
+    experiment.set_db_id(experiment.voidemon_db.insert_into_experiment(time.time()))
+    experiment.query_thread = threading.Thread(target=execute_queries_from_queue)
+    experiment.query_thread.start()
+
