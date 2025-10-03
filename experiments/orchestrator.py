@@ -250,3 +250,21 @@ def generate_run(node_count, gossip_rate, target_count, run_count):
 
             # Recreate cursor — a cursor after rollback can be in an undefined
             # state in SQLite's Python driver.
+def ensure_list(val):
+    """Parse a config value that might be a JSON-encoded list or a plain value."""
+    if isinstance(val, str):
+        try:
+            loaded = json.loads(val)
+            if isinstance(loaded, str):
+                return json.loads(loaded)
+            return loaded
+        except Exception:
+            return [val]
+    return val if isinstance(val, list) else [val]
+
+
+def prepare_experiment(server_ip):
+    global experiment
+
+    # Reload config to pick up any dashboard-side changes
+    parser.read(os.path.join(os.path.dirname(__file__), 'config.ini'))
