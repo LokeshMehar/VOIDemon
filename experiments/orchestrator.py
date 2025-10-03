@@ -286,3 +286,21 @@ def prepare_experiment(server_ip):
     experiment.query_thread = threading.Thread(target=execute_queries_from_queue)
     experiment.query_thread.start()
 
+            try:
+                cursor = conn.cursor()
+            except sqlite3.Error as cursor_err:
+                print("Error recreating cursor: {}".format(cursor_err))
+
+            for _ in pending_items:
+                experiment.query_queue.task_done()
+            pending_items = []
+
+            if query_data is not None:
+                experiment.query_queue.task_done()
+
+            continue
+
+
+def get_target_count(node_count, target_count_range):
+    return [i for i in target_count_range if i <= node_count]
+
