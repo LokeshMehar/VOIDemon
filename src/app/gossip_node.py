@@ -48,3 +48,28 @@ def compare_and_update_node_data(incoming_data):
         elif key in node.data[latest_entry] and key not in new_data:
             node.data.setdefault(new_time_key, {})[key] = node.data[latest_entry][key]
         else:
+            node.data.setdefault(new_time_key, {})[key] = new_data[key]
+            node.data_flow_per_round[node.cycle].setdefault('nd', 0)
+            node.data_flow_per_round[node.cycle].setdefault('fd', 0)
+            node.data_flow_per_round[node.cycle]['nd'] += 1
+            node.data_flow_per_round[node.cycle]['fd'] += 1
+
+        # Merge failure lists for peers that appear in both datasets
+        if key in node.data[latest_entry] and key in new_data:
+            merged_failure_list = list(set(list1).union(set(list2)))
+            node.data[new_time_key][key]["hbState"]["failureList"] = merged_failure_list
+
+    if new_time_key not in node.data:
+        data_to_send_to_monitor = node.data[latest_entry]
+    else:
+        data_to_send_to_monitor = node.data[new_time_key]
+
+    to_send = {'data': data_to_send_to_monitor, 'data_flow_per_round': node.data_flow_per_round[node.cycle]}
+    if node.is_send_data_back == "1":
+        node.session_to_monitoring.post(
+            'http://{}:{}/receive_node_data?ip={}&port={}&round={}'.format(
+                node.monitoring_address, node.client_port, node.ip, node.port, inc_round
+            ),
+            json=to_send
+        )
+
