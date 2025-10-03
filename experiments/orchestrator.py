@@ -322,3 +322,21 @@ def start_voidemon():
     prepare_experiment(server_ip)
     for node_count in experiment.node_count_range:
         new_target_count_range = get_target_count(node_count, experiment.target_count_range)
+        for target_count in new_target_count_range:
+            for gossip_rate in experiment.gossip_rate_range:
+                for run_count in range(0, experiment.run_count):
+                    print("Preparing run: {} nodes | gossip_rate={} | target_count={} | run={}".format(
+                        node_count, gossip_rate, target_count, run_count))
+                    run = generate_run(node_count, gossip_rate, target_count, run_count)
+                    experiment.runs.append(run)
+                    prepare_run(run)
+                    print("Run {} prepared — {} nodes online".format(run.run, len(run.node_list)))
+                    start_run(run, experiment.monitoring_address_ip)
+                    update_during_run(run)
+                    save_converged_run_to_database(run)
+                    reset_run_sync(run)
+    print_experiment_summary()
+    delete_all_nodes()
+    return "OK - Experiment finished"
+
+

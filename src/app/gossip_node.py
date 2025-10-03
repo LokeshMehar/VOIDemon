@@ -73,3 +73,28 @@ def compare_and_update_node_data(incoming_data):
             json=to_send
         )
 
+"""
+gossip_node.py — VOIDemon Gossip Node Entrypoint
+
+Each Docker container runs this Flask server. It exposes the gossip protocol
+HTTP endpoints (push/pull metadata exchange), the VoI-filtered metric API,
+the Chaos Engine /terminate soft-kill route, and lifecycle management routes
+called by the orchestrator at experiment start/reset time.
+"""
+
+import time
+
+from flask import Flask, request
+from node import Node, METRIC_PRIORITIES, METRIC_DELTAS
+import threading
+import logging
+import json
+
+logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
+gossip_app = Flask(__name__)
+
+
+@gossip_app.route('/receive_message', methods=['GET'])
+def receive_message():
+    if not Node.instance().is_alive:
+        return "Dead Node", 500
