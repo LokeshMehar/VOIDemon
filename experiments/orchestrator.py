@@ -304,3 +304,21 @@ def prepare_experiment(server_ip):
 def get_target_count(node_count, target_count_range):
     return [i for i in target_count_range if i <= node_count]
 
+
+def print_experiment_summary():
+    experiment.query_queue.put(None)
+    experiment.query_thread.join()
+    for run in experiment.runs:
+        print("Run {}: converged after {} messages and {:.2f}s".format(
+            run.node_count, run.convergence_message_count, run.convergence_time or 0
+        ))
+
+
+@orchestrator.route('/start', methods=['GET', 'POST'])
+def start_voidemon():
+    """Boot the full distributed gossip experiment."""
+    server_ip = socket.gethostbyname(socket.gethostname())
+    print("Orchestrator IP: {}".format(server_ip))
+    prepare_experiment(server_ip)
+    for node_count in experiment.node_count_range:
+        new_target_count_range = get_target_count(node_count, experiment.target_count_range)
