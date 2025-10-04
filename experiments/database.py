@@ -49,3 +49,20 @@ class NodeDB:
         return sqlite3.connect('node_storage.db', check_same_thread=False)
 
 
+class VoidemonDB:
+    """
+    Primary experiment database for VOIDemon.
+
+    Stores experiment metadata, per-run convergence results, per-round
+    gossip flow statistics, VoI bandwidth savings, and quorum query results.
+    """
+
+    def __init__(self):
+        self.connection = get_connection()
+        self.cursor = self.connection.cursor()
+
+        self.cursor.execute(
+            "CREATE TABLE IF NOT EXISTS experiment ("
+            "id INTEGER PRIMARY KEY AUTOINCREMENT, "
+            "timestamp DATETIME DEFAULT CURRENT_TIMESTAMP)"
+        )

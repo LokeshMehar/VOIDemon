@@ -23,3 +23,28 @@ body {
 .custom-scrollbar::-webkit-scrollbar {
   width: 4px;
   height: 4px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(100, 116, 139, 0.3);
+  border-radius: 100px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(100, 116, 139, 0.6);
+}
+
+/* ── Glow utilities ────────────────────────────────────────────────────────── */
+.glow-indigo {
+  box-shadow: 0 0 24px rgba(99, 102, 241, 0.2), 0 0 48px rgba(99, 102, 241, 0.08);
+}
+
+.glow-emerald {
+  box-shadow: 0 0 24px rgba(16, 185, 129, 0.2), 0 0 48px rgba(16, 185, 129, 0.08);
+}
+
+.glow-red {
