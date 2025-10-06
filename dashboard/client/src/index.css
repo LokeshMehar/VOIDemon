@@ -48,3 +48,28 @@ body {
 }
 
 .glow-red {
+  box-shadow: 0 0 24px rgba(239, 68, 68, 0.2), 0 0 48px rgba(239, 68, 68, 0.06);
+}
+
+/* ── Stat card number animation ───────────────────────────────────────────── */
+@keyframes count-up {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.stat-value {
+  animation: count-up 0.4s ease-out both;
+}
+
+/* ── Pulse ring animation ──────────────────────────────────────────────────── */
+@keyframes ping-slow {
+  0%, 100% { opacity: 0.6; transform: scale(1); }
+  50%       { opacity: 0;   transform: scale(1.8); }
+}
+
+.animate-ping-slow {
+  animation: ping-slow 2.5s cubic-bezier(0, 0, 0.2, 1) infinite;
+}
+
+/* ── Gradient text ─────────────────────────────────────────────────────────── */
+.gradient-text {
