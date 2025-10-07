@@ -340,3 +340,10 @@ def start_voidemon():
     return "OK - Experiment finished"
 
 
+if __name__ == "__main__":
+    orchestrator.run(
+        host='0.0.0.0',
+        port=parser.getint('VOIDemonParam', 'client_port'),
+        debug=False,
+        threaded=True
+    )
