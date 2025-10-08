@@ -78,3 +78,26 @@
       socket.disconnect();
       if (rafHandleRef.current) cancelAnimationFrame(rafHandleRef.current);
     };
+  }, [scheduleFlush]);  // scheduleFlush is stable (useCallback + no deps that change)
+
+  // ── Kill node via Chaos Engine ───────────────────────────────────────────────
+  const killNode = useCallback((nodeId) => {
+    // Mark dead immediately in the ref so the next RAF flush severs links
+    const nodesMap = nodesMapRef.current;
+    if (nodesMap.has(nodeId)) {
+      nodesMap.get(nodeId).isDead = true;
+    }
+    const nextSet = new Set(killedNodesRef.current).add(nodeId);
+    killedNodesRef.current = nextSet;
+    setKilledNodes(nextSet);
+    scheduleFlush();
+  }, [scheduleFlush]);
+
+  return {
+    graphData,
+    killedNodes,
+    globalTotalMessages,
+    globalFilteredMessages,
+    killNode,
+  };
+}
