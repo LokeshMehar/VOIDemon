@@ -66,3 +66,20 @@ class VoidemonDB:
             "id INTEGER PRIMARY KEY AUTOINCREMENT, "
             "timestamp DATETIME DEFAULT CURRENT_TIMESTAMP)"
         )
+"""
+database.py — VOIDemon SQLite Database Layer
+
+Provides two database classes:
+  - VoidemonDB: Stores experiment run data, per-round flow metrics, VoI
+    metric transmission statistics, and query results. Uses WAL mode for
+    high-throughput concurrent writes from the gossip cluster.
+  - NodeDB: Manages the node state snapshot store (unique_entries + data_entries).
+
+All schema creation happens in __init__ so the database is self-bootstrapping.
+"""
+
+import os
+import sqlite3
+import configparser
+
+
