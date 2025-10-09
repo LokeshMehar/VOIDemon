@@ -46,3 +46,19 @@ def should_send_metric(node, metric, value):
             delta_percent = 0.0 if denom == 0 else (abs(value - prev) / denom) * 100
         else:
             delta_percent = abs(value - prev)
+METRIC_PRIORITIES = {
+    "cpu": PRIORITY_HIGH,      # CPU is critical - update every round
+    "memory": PRIORITY_MEDIUM, # Memory - update every 5 rounds
+    "network": PRIORITY_MEDIUM, # Network - update every 5 rounds
+    "storage": PRIORITY_LOW    # Storage changes slowly - update every 10 rounds
+}
+
+# Delta thresholds for each metric (minimum change to trigger update)
+METRIC_DELTAS = {
+    "cpu": 5.0,      # 5% change in CPU
+    "memory": 7.0,   # 7% change in memory
+    "network": 15.0, # 15% change in network
+    "storage": 10.0  # 10% change in storage
+}
+
+
