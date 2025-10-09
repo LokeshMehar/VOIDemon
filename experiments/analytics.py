@@ -56,3 +56,32 @@ def plot_transmissions_by_metric_type(analytics_db):
     data = analytics_db.get_transmissions_by_metric_type()
     if not data:
         print("No data for Transmissions By Metric Type.")
+        return
+
+    metrics = [row[0] for row in data]
+    sent = [row[1] for row in data]
+    filtered = [row[2] for row in data]
+
+    x = range(len(metrics))
+    width = 0.35
+
+    plt.figure(figsize=(10, 6))
+    plt.bar(x, sent, width, label='Transmitted', color='salmon')
+    plt.bar([i + width for i in x], filtered, width, label='Filtered by VoI (Saved)', color='lightgreen')
+    plt.xlabel('Metric Type')
+    plt.ylabel('Count')
+    plt.title('VOIDemon: Transmission vs VoI Filtering by Metric Type')
+    plt.xticks([i + width / 2 for i in x], metrics)
+    plt.legend()
+    plt.grid(axis='y')
+    plt.savefig('transmissions_by_metric_type.png')
+    print("Saved transmissions_by_metric_type.png")
+
+
+if __name__ == '__main__':
+    analytics_db = VoidemonAnalyticsDB()
+
+    plot_query_success_vs_failure_rate(analytics_db)
+    plot_bandwidth_savings_over_time(analytics_db)
+    plot_total_bandwidth_saved(analytics_db)
+    plot_transmissions_by_metric_type(analytics_db)
