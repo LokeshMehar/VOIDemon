@@ -83,3 +83,20 @@ import sqlite3
 import configparser
 
 
+        self.cursor.execute(
+            "CREATE TABLE IF NOT EXISTS run ("
+            "id INTEGER PRIMARY KEY AUTOINCREMENT, "
+            "experiment_id INTEGER references experiment(id), "
+            "run_count INTEGER, "
+            "node_count INTEGER, "
+            "gossip_rate INTEGER, "
+            "target_count INTEGER, "
+            "convergence_round TEXT, "
+            "convergence_message_count TEXT, "
+            "convergence_time TEXT)"
+        )
+        self.cursor.execute(
+            "CREATE TABLE IF NOT EXISTS round_of_node ("
+            "id INTEGER PRIMARY KEY AUTOINCREMENT, "
+            "run_id BIGINT references run(id), "
+            "ip TEXT, "
