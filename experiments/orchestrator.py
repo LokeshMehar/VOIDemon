@@ -347,3 +347,21 @@ if __name__ == "__main__":
         debug=False,
         threaded=True
     )
+
+def get_free_port():
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    s.bind(('', 0))
+    port = s.getsockname()[1]
+    s.close()
+    return port
+
+
+def make_saveable_dict_from_run(run):
+    return {
+        "node_count": run.node_count,
+        "target_count": run.target_count,
+        "gossip_rate": run.gossip_rate,
+        "start_time": run.start_time,
+        "convergence_time": run.convergence_time,
+        "convergence_message_count": run.convergence_message_count,
+        "convergence_round": run.convergence_round
