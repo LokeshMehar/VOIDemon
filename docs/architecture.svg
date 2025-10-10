@@ -1,0 +1,33 @@
+  <line x1="1057" y1="375" x2="1057" y2="620" stroke="#f87171" stroke-width="1.5" stroke-dasharray="6,4"/>
+  <line x1="1057" y1="620" x2="1030" y2="650" stroke="#f87171" stroke-width="1.5" stroke-dasharray="6,4" marker-end="url(#arrowRed)"/>
+
+  <!-- ═══════════════════════════════════════════════════════════════ -->
+  <!-- LAYER 4: DOCKER BRIDGE NETWORK (Containerized Gossip Cluster) -->
+  <!-- ═══════════════════════════════════════════════════════════════ -->
+  <rect x="40" y="600" width="1120" height="285" rx="12" fill="url(#dockerGrad)" stroke="#8b5cf6" stroke-width="1.5" stroke-opacity="0.5"/>
+  <rect x="55" y="608" width="280" height="22" rx="4" fill="#8b5cf6" fill-opacity="0.2"/>
+  <text x="65" y="624" fill="#a78bfa" font-size="12" font-weight="600">🐳 DOCKER BRIDGE NETWORK (test)</text>
+
+  <!-- Gossip mesh links (behind nodes) -->
+  <!-- Row 1 interconnections -->
+  <line x1="195" y1="720" x2="430" y2="720" stroke="url(#gossipLink)" stroke-width="1.5" stroke-dasharray="4,3"/>
+  <line x1="430" y1="720" x2="665" y2="720" stroke="url(#gossipLink)" stroke-width="1.5" stroke-dasharray="4,3"/>
+  <line x1="665" y1="720" x2="900" y2="720" stroke="url(#gossipLink)" stroke-width="1.5" stroke-dasharray="4,3"/>
+  <line x1="900" y1="720" x2="1060" y2="720" stroke="url(#gossipLink)" stroke-width="1.5" stroke-dasharray="4,3"/>
+  <!-- Cross links -->
+  <line x1="195" y1="720" x2="350" y2="830" stroke="url(#gossipLink)" stroke-width="1" stroke-dasharray="4,4" stroke-opacity="0.4"/>
+  <line x1="430" y1="720" x2="585" y2="830" stroke="url(#gossipLink)" stroke-width="1" stroke-dasharray="4,4" stroke-opacity="0.4"/>
+  <line x1="665" y1="720" x2="820" y2="830" stroke="url(#gossipLink)" stroke-width="1" stroke-dasharray="4,4" stroke-opacity="0.4"/>
+  <line x1="900" y1="720" x2="585" y2="830" stroke="url(#gossipLink)" stroke-width="1" stroke-dasharray="4,4" stroke-opacity="0.3"/>
+  <line x1="195" y1="720" x2="665" y2="720" stroke="url(#gossipLink)" stroke-width="1" stroke-dasharray="3,5" stroke-opacity="0.25"/>
+  <!-- Row 2 interconnections -->
+  <line x1="350" y1="830" x2="585" y2="830" stroke="url(#gossipLink)" stroke-width="1.5" stroke-dasharray="4,3"/>
+  <line x1="585" y1="830" x2="820" y2="830" stroke="url(#gossipLink)" stroke-width="1.5" stroke-dasharray="4,3"/>
+  <!-- Cross links row2 to row1 -->
+  <line x1="350" y1="830" x2="430" y2="720" stroke="url(#gossipLink)" stroke-width="1" stroke-dasharray="4,4" stroke-opacity="0.4"/>
+  <line x1="820" y1="830" x2="900" y2="720" stroke="url(#gossipLink)" stroke-width="1" stroke-dasharray="4,4" stroke-opacity="0.4"/>
+  <line x1="820" y1="830" x2="1060" y2="720" stroke="url(#gossipLink)" stroke-width="1" stroke-dasharray="4,4" stroke-opacity="0.3"/>
+
+  <!-- ── Node 1 ── -->
+  <rect x="110" y="660" width="170" height="120" rx="8" fill="#1e1e2e" stroke="#8b5cf6" stroke-width="1"/>
+  <rect x="120" y="670" width="60" height="16" rx="3" fill="#8b5cf6" fill-opacity="0.25"/>
