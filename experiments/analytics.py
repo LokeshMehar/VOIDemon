@@ -87,3 +87,32 @@ if __name__ == '__main__':
     plot_transmissions_by_metric_type(analytics_db)
 
     print("All analytics charts generated.")
+"""
+analytics.py — VOIDemon Post-Run Analytics
+
+Generates PNG charts from the VOIDemon experiment database after a run completes.
+Charts produced:
+  - Query success rate vs node failure rate
+  - Metric bandwidth savings over gossip rounds
+  - Total metric transmission pie chart (sent vs filtered by VoI)
+  - Sent vs filtered breakdown by metric type (cpu / memory / network / storage)
+
+Usage:
+    python experiments/analytics.py
+"""
+
+import sqlite3
+import matplotlib.pyplot as plt
+import os
+
+DB_FILE = 'voidemon.db'
+
+
+class VoidemonAnalyticsDB:
+    """Read-only database accessor for post-run analytics queries."""
+
+    def __init__(self):
+        db_path = DB_FILE
+        if not os.path.exists(db_path):
+            db_path = os.path.join(os.path.dirname(__file__), DB_FILE)
+        self.connection = sqlite3.connect(db_path, check_same_thread=False)
