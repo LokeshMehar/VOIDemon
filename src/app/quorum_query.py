@@ -66,3 +66,21 @@ def query(node_list, quorum_size, target_node_ip, target_node_port, docker_ip):
             if len(set(counters)) == 1:
                 # Digest consensus — guarantees identical data
                 digests = [d["digest"] for d in metadatas.values()]
+                if len(set(digests)) == 1:
+                    # 4. Fetch actual node data from the first quorum member
+                    first_node = random_nodes[0]
+                    data_resp = requests.get(
+                        build_url(first_node, "/get_recent_data_from_node"),
+                        timeout=5
+                    )
+                    data_resp.raise_for_status()
+                    result = data_resp.json()[target_key]
+                    print(f"[QuorumQuery] Consensus reached on attempt {attempt + 1}: {result}")
+                    return total_messages, result
+
+        # Small backoff before the next attempt
+        time.sleep(0.5)
+
+    raise RuntimeError(
+        f"[QuorumQuery] Failed: could not reach quorum consensus after {MAX_QUERY_RETRIES} attempts"
+    )
