@@ -85,3 +85,5 @@ if __name__ == '__main__':
     plot_bandwidth_savings_over_time(analytics_db)
     plot_total_bandwidth_saved(analytics_db)
     plot_transmissions_by_metric_type(analytics_db)
+
+    print("All analytics charts generated.")

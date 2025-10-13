@@ -29,3 +29,34 @@ export function useConfig() {
       setConfig(data);
     } catch (err) {
       setFetchError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  const handleChange = useCallback((section, key, value) => {
+    setConfig(prev => ({
+      ...prev,
+      [section]: { ...prev[section], [key]: value },
+    }));
+  }, []);
+
+  const handleSave = useCallback(async (onSuccess, onError) => {
+    setSaving(true);
+    try {
+      const res = await fetch(`${API_BASE}/config`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(config),
+      });
+
+      if (!res.ok) {
+        let errorMsg = "Save error";
+        try {
+          const errorData = await res.json();
+          errorMsg = errorData.error || errorData.details || errorMsg;
+        } catch (e) {
+          try {
+            const text = await res.text();
+            if (text) errorMsg = text;
+          } catch (e2) { /* ignore */ }
