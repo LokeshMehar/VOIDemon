@@ -123,3 +123,28 @@ def start_node():
                     client_thread=client_thread, counter_thread=counter_thread, data_flow_per_round={},
                     push_mode=push_mode, client_port=client_port)
     client_thread.start()
+    compare_and_update_node_data(request.get_json())
+    return "OK"
+
+
+@gossip_app.route('/metadata', methods=['GET'])
+def get_metadata():
+    if not Node.instance().is_alive:
+        return "Dead Node", 500
+    node = Node.instance()
+    if not node.data:
+        return json.dumps({})
+    latest_entry = max(node.data.keys(), key=int)
+    metadata = {}
+    for key in node.data[latest_entry]:
+        if 'counter' in node.data[latest_entry][key]:
+            metadata[key] = {'counter': node.data[latest_entry][key]['counter'],
+                             'digest': node.data[latest_entry][key]['digest']}
+    return json.dumps(metadata)
+
+
+def compare_node_data_with_metadata(data):
+    """Compare incoming metadata with local state; return keys to request and data to push back."""
+    node = Node.instance()
+    metadata = data['metadata']
+    sender_key = next(key for key in data if key != 'metadata')
