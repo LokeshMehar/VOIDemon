@@ -32,3 +32,37 @@ export function LiveTopologyGraph({ graphData, onSelectNode, killedNodes, pendin
     };
   }, [graphData.nodes.length]);
 
+  const paintNode = useCallback((node, ctx, globalScale) => {
+    const isKilled   = killedNodes.has(node.id);
+    const isSelected = selectedNodeId === node.id;
+    const isPending  = pendingKills?.has(node.id);
+    const r          = isSelected ? 11 : 8;
+    const { ic, node_count } = node;
+    const activeNodeCount = node.active_target || Math.max((node_count || 1) - killedNodes.size, 1);
+
+    let color = "#64748b";
+    if (isKilled)       color = "#475569";
+    else if (isPending) color = "#f59e0b";
+    else if (ic > 0)    color = ic >= activeNodeCount ? "#10b981" : "#6366f1";
+
+    // Outer glow ring (selected or converged)
+    if (!isKilled) {
+      ctx.beginPath();
+      ctx.arc(node.x, node.y, r + 6, 0, 2 * Math.PI);
+      ctx.fillStyle = isSelected ? `${color}30` : `${color}15`;
+      ctx.fill();
+    }
+
+    // Node disc
+    ctx.beginPath();
+    ctx.arc(node.x, node.y, r, 0, 2 * Math.PI);
+    ctx.fillStyle = isKilled ? "transparent" : color;
+    ctx.fill();
+
+    // Border
+    ctx.strokeStyle = isKilled ? "#ef444440" : isSelected ? "#fff" : `${color}80`;
+    ctx.lineWidth   = isKilled ? 1.5 : isSelected ? 2.5 : 1.5;
+    ctx.setLineDash(isKilled ? [3, 2] : []);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
