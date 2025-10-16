@@ -60,3 +60,25 @@ export function useConfig() {
             const text = await res.text();
             if (text) errorMsg = text;
           } catch (e2) { /* ignore */ }
+        }
+        throw new Error(errorMsg);
+      }
+
+      onSuccess?.("Configuration cached.");
+    } catch (err) {
+      onError?.(err.message);
+    } finally {
+      setSaving(false);
+    }
+  }, [config]);
+
+  return {
+    config,
+    loading,
+    fetchError,
+    saving,
+    fetchConfig,
+    handleChange,
+    handleSave,
+  };
+}
