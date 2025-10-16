@@ -62,3 +62,19 @@ METRIC_DELTAS = {
 }
 
 
+    else:
+        delta_percent = float('inf')
+
+    should_send = False
+
+    if priority == PRIORITY_HIGH:
+        should_send = True
+    elif rounds_since_sent >= priority:
+        should_send = True
+    elif delta_percent >= METRIC_DELTAS.get(metric, 0):
+        should_send = True
+
+    if should_send:
+        node.last_metric_sent_round[metric] = node.cycle
+
+    node.last_metric_values[metric] = value
