@@ -61,3 +61,24 @@ const API_BASE = (import.meta.env.VITE_API_BASE || "") + "/api";
             {/* Logo + Name */}
             <div className="flex items-center gap-3 mb-3">
               <div className="relative">
+                <div className="absolute inset-0 bg-indigo-500/40 rounded-2xl blur-md" />
+                <div className="relative w-11 h-11 rounded-2xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center shadow-xl">
+                  <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                  </svg>
+                </div>
+              </div>
+              <div>
+                <h1 className="text-2xl font-black tracking-tight text-white leading-none">
+                  VOID<span className="gradient-text-indigo">DEMON</span>
+                </h1>
+                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-[0.25em] mt-0.5">Control Center</p>
+              </div>
+            </div>
+            <p className="text-slate-500 text-sm leading-relaxed max-w-sm">
+              Distributed monitoring via VoI-prioritized gossip protocol with real-time fault detection.
+            </p>
+          </div>
+
+          {/* Status pill + efficiency badge */}
+          <div className="flex flex-wrap items-center gap-3 shrink-0">
