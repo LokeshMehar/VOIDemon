@@ -117,3 +117,20 @@ import configparser
             "round INTEGER, "
             "nd INTEGER, "
             "fd INTEGER, "
+            "rm INTEGER, "
+            "ic INTEGER, "
+            "bytes_of_data INTEGER)"
+        )
+        self.cursor.execute(
+            "CREATE TABLE IF NOT EXISTS query ("
+            "id INTEGER PRIMARY KEY AUTOINCREMENT, "
+            "run_id BIGINT references run(id), "
+            "node_count INTEGER, "
+            "query_num INTEGER, "
+            "failure_percent INTEGER, "
+            "time_to_query TEXT, "
+            "total_messages_for_query INTEGER, "
+            "success TEXT)"
+        )
+        # VoI bandwidth savings tracking
+        self.cursor.execute(

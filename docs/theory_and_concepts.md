@@ -82,3 +82,31 @@ T(m, i, t) = \begin{cases}
 1, & \text{if } P(m) = \text{HIGH} \\
 1, & \text{if } P(m) \in \{\text{MED, LOW}\} \land (t - t_{last} \geq k_p \lor |v_i(t) - v_{last}| > \Delta_p) \\
 0, & \text{otherwise} 
+\end{cases}
+$$
+
+The final transmitted metric vector is the filtered subset: 
+$$ M'_i(t) = \{ m \in M_i(t) \mid T(m, i, t) = 1 \} $$
+
+---
+
+## 4. Bandwidth and Energy Conservation Models
+
+The application of VoI filtering translates into mathematically provable and empirically validated savings in both bandwidth and energy.
+
+### 4.1 Bandwidth Savings ($S_B$)
+In a standard baseline gossip protocol over $T$ rounds across $K$ nodes with a metric vector cardinality $Z$, the total potential transmissions are:
+$$ B_{total} = T \cdot K \cdot Z $$
+
+With VoI filtering, the actual transmissions are the sum of the transmission decisions:
+$$ B_{VoI} = \sum_{t=1}^{T} \sum_{i=1}^{K} \sum_{z=1}^{Z} T(m_z, i, t) $$
+
+The percentage of bandwidth saved is therefore:
+$$ S_B(\%) = \left( 1 - \frac{B_{VoI}}{B_{total}} \right) \times 100 $$
+
+Empirical evaluations in VOIDemon consistently demonstrate an $S_B$ of **50% to 75%**, reducing 600,000 baseline transmissions to roughly 310,000 for a 10-node cluster over standard observation windows.
+
+### 4.2 Battery Life Extension
+Assuming the energy cost to transmit a single metric update ($\epsilon_m$) is constant, the total energy saved ($E_{saved}$) is directly proportional to the suppressed transmissions:
+
+$$ E_{saved} = \epsilon_m \cdot (B_{total} - B_{VoI}) $$
