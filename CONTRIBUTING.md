@@ -34,3 +34,18 @@ At this point, you should switch back to your master branch and make sure it's u
 git remote add upstream https://github.com/LokeshMehar/VOIDemon.git
 git checkout master
 git pull upstream master
+```
+
+Then update your feature branch from your local copy of master, and push it!
+
+```sh
+git checkout 325-add-grpc-support
+git rebase master
+git push --set-upstream origin 325-add-grpc-support
+```
+
+Finally, go to GitHub and make a Pull Request.
+
+## Keeping your Pull Request updated
+
+If a maintainer asks you to "rebase" your PR, they're saying that a lot of code has changed, and that you need to update your branch so it's easier to merge.

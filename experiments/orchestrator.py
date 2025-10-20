@@ -365,3 +365,21 @@ def make_saveable_dict_from_run(run):
         "convergence_time": run.convergence_time,
         "convergence_message_count": run.convergence_message_count,
         "convergence_round": run.convergence_round
+    }
+
+
+def save_run_to_database(run):
+    run.db_id = experiment.voidemon_db.insert_into_run(
+        experiment.db_id, run.run, run.node_count, run.gossip_rate, run.target_count
+    )
+
+
+def save_converged_run_to_database(run):
+    experiment.voidemon_db.insert_into_converged_run(
+        run.db_id, run.convergence_round, run.convergence_message_count, run.convergence_time
+    )
+
+
+class Run:
+    """Represents a single experiment run (a specific node_count × gossip_rate combination)."""
+
