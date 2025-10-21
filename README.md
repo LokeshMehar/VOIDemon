@@ -70,4 +70,24 @@ Please read our [Contributing Guidelines](CONTRIBUTING.md) and [Code of Conduct]
 
 ## 📄 License
 
-Distributed under the MIT License. See [`LICENSE`](LICENSE) for more information.
+Distributed under the MIT License. See [`LICENSE`](LICENSE) for more information.<div align="center">
+
+# VOIDemon
+### Value-of-Information (VoI) Optimized Distributed Edge Monitoring
+
+[![Python](https://img.shields.io/badge/Python-3.9+-3776AB?style=flat-square&logo=python&logoColor=white)](https://python.org)
+[![React](https://img.shields.io/badge/React-18-61DAFB?style=flat-square&logo=react&logoColor=black)](https://react.dev)
+[![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?style=flat-square&logo=docker&logoColor=white)](https://docker.com)
+[![Node.js](https://img.shields.io/badge/Node.js-Express-339933?style=flat-square&logo=nodedotjs&logoColor=white)](https://nodejs.org)
+[![SQLite](https://img.shields.io/badge/SQLite-WAL-003B57?style=flat-square&logo=sqlite&logoColor=white)](https://sqlite.org)
+[![License](https://img.shields.io/badge/License-MIT-8B5CF6?style=flat-square)](LICENSE)
+
+**VOIDemon** is a decentralized, self-adaptive, and resource-aware monitoring framework designed for volatile edge computing environments. By integrating a stochastic gossip protocol with a novel priority-based metric filtering mechanism, VOIDemon drastically reduces network bandwidth consumption and extends IoT device battery life by over 50%, completely eliminating the need for centralized monitoring bottlenecks.
+
+[Explore the Documentation](docs/) · [Report Bug](https://github.com/LokeshMehar/VOIDemon/issues) · [Request Feature](https://github.com/LokeshMehar/VOIDemon/issues)
+
+</div>
+
+---
+
+## 📖 The Problem with Centralized Monitoring

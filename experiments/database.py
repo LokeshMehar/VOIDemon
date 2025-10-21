@@ -134,3 +134,20 @@ import configparser
         )
         # VoI bandwidth savings tracking
         self.cursor.execute(
+            "CREATE TABLE IF NOT EXISTS round_metrics_stats ("
+            "id INTEGER PRIMARY KEY AUTOINCREMENT, "
+            "run_id BIGINT references run(id), "
+            "node_ip TEXT, "
+            "node_port TEXT, "
+            "round INTEGER, "
+            "metrics_sent INTEGER, "
+            "metrics_filtered INTEGER, "
+            "timestamp REAL)"
+        )
+        # Per-metric transmission detail
+        self.cursor.execute(
+            "CREATE TABLE IF NOT EXISTS metric_transmissions ("
+            "id INTEGER PRIMARY KEY AUTOINCREMENT, "
+            "run_id BIGINT references run(id), "
+            "node_ip TEXT, "
+            "node_port TEXT, "
