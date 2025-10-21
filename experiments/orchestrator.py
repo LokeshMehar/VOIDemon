@@ -383,3 +383,21 @@ def save_converged_run_to_database(run):
 class Run:
     """Represents a single experiment run (a specific node_count × gossip_rate combination)."""
 
+    def __init__(self, node_count, gossip_rate, target_count, run, node_list=None, db_collection=None):
+        self.db_id = -1
+        self.data_entries_per_ip = {}
+        self.node_list = node_list or []
+        self.node_count = int(node_count)
+        self.convergence_round = -1
+        self.convergence_message_count = -1
+        self.message_count = 0
+        self.start_time = None
+        self.convergence_time = None
+        self.is_converged = False
+        self.gossip_rate = float(gossip_rate)
+        self.target_count = int(target_count)
+        self.run = int(run)
+        self.db_collection = db_collection
+        self.max_round_is_reached = False
+        self.ip_per_ic = {}
+        self.stopped_nodes = {}
