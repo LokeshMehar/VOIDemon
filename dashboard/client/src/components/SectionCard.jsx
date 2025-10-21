@@ -74,3 +74,25 @@ export function SectionCard({ sectionKey, sectionData, onChange }) {
             <div key={key} className="flex flex-col gap-1.5">
               <label htmlFor={inputId} className="text-[9px] font-bold text-slate-500 uppercase tracking-widest pl-0.5">
                 {sectionLabel(key)}
+              </label>
+              <input
+                id={inputId}
+                type="text"
+                value={strVal}
+                onChange={e => onChange(sectionKey, key, e.target.value)}
+                className={`
+                  bg-black/30 border border-white/6 rounded-xl px-3.5 py-2.5
+                  text-slate-100 text-xs font-mono placeholder-slate-700
+                  focus:outline-none focus:ring-1 ${meta.ring}
+                  transition-all duration-200 hover:border-white/10
+                `}
+                spellCheck={false}
+                autoComplete="off"
+              />
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
