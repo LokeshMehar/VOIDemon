@@ -148,3 +148,28 @@ def compare_node_data_with_metadata(data):
     node = Node.instance()
     metadata = data['metadata']
     sender_key = next(key for key in data if key != 'metadata')
+    counter_thread.start()
+
+    # Apply VoI priority/delta configuration sent by the orchestrator
+    if 'metric_priorities' in init_data:
+        METRIC_PRIORITIES.update(init_data['metric_priorities'])
+    if 'metric_deltas' in init_data:
+        METRIC_DELTAS.update(init_data['metric_deltas'])
+
+    return "OK"
+
+
+@gossip_app.route('/register_new_node', methods=['POST'])
+def register_new_node():
+    """Register a newly joined peer in this node's peer list."""
+    Node.instance().node_list.append(request.get_json())
+    return "OK"
+
+
+@gossip_app.route('/get_data_from_node', methods=['GET'])
+def get_data_from_node():
+    """Return full historical gossip data stored by this node."""
+    return Node.instance().data
+
+
+@gossip_app.route('/get_recent_data_from_node', methods=['GET'])
