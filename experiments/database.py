@@ -168,3 +168,20 @@ import configparser
             to_return = self.cursor.lastrowid
             self.connection.commit()
             self.connection.close()
+            return to_return
+        except Exception as e:
+            print("Error DB insert experiment: {}".format(e))
+            return -1
+
+    def insert_into_run(self, experiment_id, run_count, node_count, gossip_rate, target_count):
+        try:
+            self.connection = get_connection()
+            self.cursor = self.connection.cursor()
+            self.cursor.execute(
+                "INSERT INTO run (experiment_id, run_count, node_count, gossip_rate, target_count) "
+                "VALUES (?, ?, ?, ?, ?)",
+                (experiment_id, run_count, node_count, gossip_rate, target_count)
+            )
+            to_return = self.cursor.lastrowid
+            self.connection.commit()
+            self.connection.close()
