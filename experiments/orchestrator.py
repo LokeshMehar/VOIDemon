@@ -401,3 +401,21 @@ class Run:
         self.max_round_is_reached = False
         self.ip_per_ic = {}
         self.stopped_nodes = {}
+        self.manually_killed_count = 0  # Incremented when the dashboard kills a node via Chaos Engine
+        self.killed_node_keys = set()   # Set of "ip:port" strings for manually killed nodes
+
+    def set_db_id(self, param):
+        self.db_id = param
+
+
+class Experiment:
+    """Holds configuration and state for the entire experiment (all runs)."""
+
+    def __init__(self, node_count_range, gossip_rate_range, target_count_range, run_count,
+                 monitoring_address_ip, is_send_data_back, push_mode):
+        self.db_id = -1
+        self.node_count_range = node_count_range
+        self.gossip_rate_range = gossip_rate_range
+        self.target_count_range = target_count_range
+        self.run_count = run_count
+        self.runs = []
