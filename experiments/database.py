@@ -151,3 +151,20 @@ import configparser
             "run_id BIGINT references run(id), "
             "node_ip TEXT, "
             "node_port TEXT, "
+            "round INTEGER, "
+            "metric_type TEXT, "
+            "was_sent INTEGER, "
+            "metric_value REAL, "
+            "timestamp REAL)"
+        )
+        self.connection.commit()
+        self.connection.close()
+
+    def insert_into_experiment(self, timestamp):
+        try:
+            self.connection = get_connection()
+            self.cursor = self.connection.cursor()
+            self.cursor.execute("INSERT INTO experiment (timestamp) VALUES (?)", (timestamp,))
+            to_return = self.cursor.lastrowid
+            self.connection.commit()
+            self.connection.close()
