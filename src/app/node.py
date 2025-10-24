@@ -110,3 +110,19 @@ class Node:
         self.is_alive = None
         self.gossip_counter = None
         self.failure_counter = None
+        self.failure_list = []
+        self.monitoring_address = None
+        self.database_address = None
+        self.client_thread = None
+        self.counter_thread = None
+        self.push_mode = None
+        self.is_send_data_back = None
+        self.metric_last_sent = {}
+        
+        # Sessions — instance scope for experiment isolation
+        self.session_to_monitoring = requests.Session()
+        self.gossip_session = requests.Session()
+
+        # VoI metric tracking — stored as instance attrs so they reset on re-init
+        self.last_metric_values = {}
+        self.last_metric_sent_round = {}
