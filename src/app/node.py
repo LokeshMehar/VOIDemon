@@ -78,3 +78,19 @@ METRIC_DELTAS = {
         node.last_metric_sent_round[metric] = node.cycle
 
     node.last_metric_values[metric] = value
+
+    logger.debug(
+        "METRIC_PRIORITY: metric=%s, value=%.2f, priority=%d, "
+        "delta=%.2f%%, rounds_since_sent=%d, decision=%s",
+        metric, value, priority, delta_percent,
+        rounds_since_sent, 'SEND' if should_send else 'SKIP',
+    )
+
+    return should_send
+
+
+@Singleton
+class Node:
+    """
+    Singleton gossip node — holds all per-node runtime state.
+
