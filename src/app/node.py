@@ -94,3 +94,19 @@ class Node:
     """
     Singleton gossip node — holds all per-node runtime state.
 
+    All metric-tracking fields are instance attributes so they reset cleanly
+    when set_params() is called for a new experiment run. This prevents stale
+    metric baselines (last_network_bytes, last_metric_sent_round, etc.) from
+    leaking across successive VOIDemon experiment runs.
+    """
+
+    def __init__(self):
+        self.ip = None
+        self.port = None
+        self.cycle = None
+        self.node_list = None
+        self.data = None
+        self.data_flow_per_round = None
+        self.is_alive = None
+        self.gossip_counter = None
+        self.failure_counter = None
