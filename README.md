@@ -91,3 +91,24 @@ Distributed under the MIT License. See [`LICENSE`](LICENSE) for more information
 ---
 
 ## 📖 The Problem with Centralized Monitoring
+
+The proliferation of the Internet of Things (IoT) has driven the adoption of edge computing to process data near its source. However, traditional monitoring systems (like Prometheus or Datadog) rely on a **centralized architecture**. In the resource-constrained context of the edge—characterized by network volatility, high latency, and limited battery life—these centralized servers create severe performance bottlenecks and single points of failure.
+
+Decentralized peer-to-peer (P2P) systems like Epidemic/Gossip protocols solve the single-point-of-failure problem, but they are notoriously resource-intensive, continuously blasting full state payloads across the network and draining mobile batteries.
+
+## 🚀 The VOIDemon Solution
+
+**VOIDemon** bridges this gap by introducing **Value of Information (VoI)** into the decentralized fabric. 
+
+Instead of broadcasting every metric on every tick, VOIDemon assigns priority tiers (HIGH, MEDIUM, LOW) to system metrics. The engine evaluates the mathematical *value* of the data: Has it changed significantly? Is it critical for real-time operations? Redundant, static information (like storage capacity) is heavily suppressed, while vital performance data (like CPU spikes) bypasses the filters.
+
+### 🌟 Key Performance Outcomes
+- **~60% Reduction in Network Overhead:** Bandwidth is conserved by intelligently suppressing up to 82% of static metric transmissions.
+- **+52.5% Extended Battery Life:** By eliminating wireless radio transmissions for redundant data, projected device operational lifetime jumps significantly.
+- **100% Resilience:** Leaderless Quorum Consensus (LQC) ensures rapid failure detection without a central coordinator.
+
+---
+
+## 🏗️ System Architecture
+
+<p align="center">

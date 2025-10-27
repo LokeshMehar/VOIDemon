@@ -126,3 +126,19 @@ class Node:
         # VoI metric tracking — stored as instance attrs so they reset on re-init
         self.last_metric_values = {}
         self.last_metric_sent_round = {}
+        self.last_network_bytes = 0
+        self.last_network_time = time.time()
+        self.node_process = psutil.Process()
+
+        # Quiesce event — set by the gossip loop when it exits, used by /terminate
+        self.quiesced_event = None
+
+    def set_params(self, ip, port, cycle, node_list, data, is_alive, gossip_counter,
+                   failure_counter, monitoring_address, database_address,
+                   is_send_data_back, client_thread, counter_thread,
+                   data_flow_per_round, push_mode, client_port):
+        """(Re-)initialise node state for a new experiment run.
+        
+        Resets all per-lifecycle fields including metric tracking state so that
+        VoI filtering behaves correctly from round 0 of each new run.
+        """
