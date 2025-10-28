@@ -110,3 +110,31 @@ Empirical evaluations in VOIDemon consistently demonstrate an $S_B$ of **50% to 
 Assuming the energy cost to transmit a single metric update ($\epsilon_m$) is constant, the total energy saved ($E_{saved}$) is directly proportional to the suppressed transmissions:
 
 $$ E_{saved} = \epsilon_m \cdot (B_{total} - B_{VoI}) $$
+
+The extended operational lifetime of the device ($T_{extended}$) can be modeled as:
+
+$$ T_{extended} = \frac{T_{baseline}}{1 - (R_{filtered} \cdot \alpha)} $$
+
+*(Where $R_{filtered}$ is the filtering ratio, and $\alpha$ is an efficiency scalar.)*
+
+By completely suppressing static updates (like Storage which contributes ~4,618 mWh of savings), VOIDemon empirically extends projected edge device battery life by over **52.5%** (from 24.0 hours to 36.6 hours).
+
+---
+
+## 5. Leaderless Quorum Consensus (LQC)
+
+While the gossip protocol handles data *dissemination*, VOIDemon must also ensure trustworthy data *retrieval* and failure detection without a central authority. It employs a **Leaderless Quorum Consensus (LQC)** mechanism.
+
+### 5.1 Fault Detection (3-Strike System)
+Edge nodes can die unexpectedly. When a node fails to respond to gossip requests or its liveness timestamp $H_i(t)$ drifts beyond a safety margin across a quorum of peers, the network considers it deceased. 
+
+```mermaid
+stateDiagram-v2
+    [*] --> Healthy
+    Healthy --> Suspect : Ping Timeout / Stale Timestamp
+    Suspect --> Healthy : Successful Ping Reply
+    Suspect --> Dead : Strike 3 (Quorum Agreement)
+    Dead --> Healthy : Node Re-joins Network
+```
+
+Because there is no leader, a single node detecting a timeout only marks the target as `Suspect`. Only when the gossip network converges and a mathematical quorum (e.g., $N/2 + 1$) agrees the node is stale does the cluster formally sever the node from the active topology representation.

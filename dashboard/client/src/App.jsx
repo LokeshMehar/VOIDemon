@@ -82,3 +82,24 @@ const API_BASE = (import.meta.env.VITE_API_BASE || "") + "/api";
 
           {/* Status pill + efficiency badge */}
           <div className="flex flex-wrap items-center gap-3 shrink-0">
+            <GlobalEfficiencyBadge savingsPercent={globalSavingsPercent} />
+            <div className="glass px-4 py-2 rounded-xl flex items-center gap-2.5">
+              <div className="relative">
+                <div className="absolute inset-0 bg-emerald-500 rounded-full animate-ping-slow opacity-60" />
+                <div className="relative w-2 h-2 rounded-full bg-emerald-400" />
+              </div>
+              <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+                Stream <span className="text-slate-100">Live</span>
+              </span>
+            </div>
+          </div>
+        </header>
+
+        {/* ── Stats Bar ────────────────────────────────────────────────────────── */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <StatCard
+            label="Active Nodes"
+            value={activeNodeCount}
+            sub={killedNodes.size > 0 ? `${killedNodes.size} terminated` : "All healthy"}
+            accentClass="bg-indigo-500/10 text-indigo-400"
+            iconPath="M5 12h14M12 5l7 7-7 7"
