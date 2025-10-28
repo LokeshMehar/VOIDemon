@@ -124,3 +124,24 @@ function StatCard({ label, value, sub, accentClass, iconPath, delay = 0 }) {
       style={{ animationDelay: `${delay}ms` }}
     >
       <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${accentClass} transition-transform duration-300 group-hover:scale-110`}>
+        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <path strokeLinecap="round" strokeLinejoin="round" d={iconPath} />
+        </svg>
+      </div>
+      <div className="min-w-0">
+        <p className="text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em] mb-1">{label}</p>
+        <p className="text-xl font-mono font-black text-white truncate stat-value">{value}</p>
+        {sub && <p className="text-[10px] text-slate-600 font-medium mt-0.5">{sub}</p>}
+      </div>
+    </div>
+  );
+}
+
+export default function App() {
+  // ── Hooks ───────────────────────────────────────────────────────────────────
+  const {
+    graphData,
+    killedNodes,
+    globalTotalMessages,
+    globalFilteredMessages,
+    killNode: gossipKillNode,
