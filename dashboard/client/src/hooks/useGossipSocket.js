@@ -101,3 +101,43 @@
     killNode,
   };
 }
+import { useState, useEffect, useRef, useCallback } from "react";
+import { io } from "socket.io-client";
+
+const SOCKET_URL = "http://localhost:5000";
+const METRICS_FIELDS = ["cpu", "memory", "network", "storage"];
+
+/**
+ * useGossipSocket — manages the Socket.IO connection lifetime and all
+ * live-graph state.
+ *
+ * Key fixes applied here:
+ *
+ * 1. STALE CLOSURE (CodeRabbit, Major):
+ *    The vanilla `new_metric` handler closed over the initial empty `killedNodes`
+ *    Set because `useEffect` captures values at render time and we used [].
+ *    Solution: `killedNodesRef` is kept in sync with `killedNodes` state and is
+ *    what the socket handler always reads.  No stale closure possible.
+ *
+ * 2. WEBSOCKET THROTTLING / STATE THRASHING:
+ *    At 10-20 messages/sec per node the old code called setGraphData() on every
+ *    event, hammering React's reconciler and causing continuous ForceGraph2D
+ *    layout re-runs.  Solution: incoming events mutate only the mutable refs;
+ *    a requestAnimationFrame loop (targeting ~60fps max) flushes into React
+ *    state, batching all messages that arrived within one frame.
+ */
+export function useGossipSocket() {
+  // ── mutable refs — hold the canonical state; never cause re-renders ─────────
+  const nodesMapRef   = useRef(new Map());
+  const linksSetRef   = useRef(new Set());
+  const strikesMapRef = useRef(new Map());
+
+  // killedNodesRef shadows the killedNodes state so socket handlers always
+  // see the current set even though they live inside a [] effect.
+  const killedNodesRef = useRef(new Set());
+
+  // Signals that a flush is needed on the next animation frame
+  const pendingFlushRef = useRef(false);
+  const rafHandleRef    = useRef(null);
+
+  // ── React state — only updated at frame rate ────────────────────────────────
