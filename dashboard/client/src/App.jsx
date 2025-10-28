@@ -103,3 +103,24 @@ const API_BASE = (import.meta.env.VITE_API_BASE || "") + "/api";
             sub={killedNodes.size > 0 ? `${killedNodes.size} terminated` : "All healthy"}
             accentClass="bg-indigo-500/10 text-indigo-400"
             iconPath="M5 12h14M12 5l7 7-7 7"
+/** Extract the IP portion from an "ip:port" string. */
+function ipOnly(nodeId) {
+  return nodeId ? nodeId.split(":")[0] : nodeId;
+}
+
+/** Format bytes to a human-readable string. */
+function formatBytes(bytes) {
+  if (bytes === 0) return "0 B";
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
+}
+
+// ── Stat Card component ────────────────────────────────────────────────────────
+function StatCard({ label, value, sub, accentClass, iconPath, delay = 0 }) {
+  return (
+    <div
+      className={`fade-in glass rounded-2xl p-5 flex items-start gap-4 border hover:border-white/10 transition-all duration-300 group`}
+      style={{ animationDelay: `${delay}ms` }}
+    >
+      <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${accentClass} transition-transform duration-300 group-hover:scale-110`}>

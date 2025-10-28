@@ -173,3 +173,28 @@ def get_data_from_node():
 
 
 @gossip_app.route('/get_recent_data_from_node', methods=['GET'])
+def get_recent_data_from_node():
+    """Return only the most recent gossip snapshot from this node."""
+    data = Node.instance().data
+    latest_entry = max(data.keys(), key=int)
+    return data[latest_entry]
+
+
+@gossip_app.route('/get_nodelist_from_node', methods=['GET'])
+def get_nodelist_from_node():
+    """Return this node's current peer list."""
+    return json.dumps(Node.instance().node_list)
+
+
+@gossip_app.route('/hello_world', methods=['GET'])
+def health_check():
+    """Health-check endpoint — confirms the node is responding."""
+    return "VOIDemon node alive."
+
+
+@gossip_app.route('/metrics_priority_stats', methods=['GET'])
+def get_metrics_priority_stats():
+    """Return statistics about VoI priority-based metric filtering for this node."""
+    node = Node.instance()
+
+    if len(node.data) == 0:
