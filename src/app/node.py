@@ -142,3 +142,19 @@ class Node:
         Resets all per-lifecycle fields including metric tracking state so that
         VoI filtering behaves correctly from round 0 of each new run.
         """
+        self.ip = ip
+        self.port = port
+        self.monitoring_address = monitoring_address
+        self.database_address = database_address
+        self.cycle = cycle
+        self.node_list = node_list
+        self.data = data
+        self.is_alive = is_alive
+        self.gossip_counter = gossip_counter
+        self.failure_counter = failure_counter
+        self.client_thread = client_thread
+        self.counter_thread = counter_thread
+        self.data_flow_per_round = data_flow_per_round
+        self.is_send_data_back = is_send_data_back
+        self.push_mode = push_mode
+        self.client_port = client_port
