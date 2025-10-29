@@ -30,3 +30,11 @@ export function GlobalEfficiencyBadge({ savingsPercent }) {
   return (
     <div
       className={`flex items-center gap-2 border px-3.5 py-2 rounded-xl cursor-help transition-all duration-500 ${color}`}
+      title="Percentage of redundant network updates filtered by the Value-of-Information (VoI) algorithm."
+    >
+      <div className={`w-1.5 h-1.5 rounded-full ${dotColor} animate-pulse`} />
+      <span className="text-[10px] font-black uppercase tracking-widest opacity-70">VoI</span>
+      <span className="text-sm font-mono font-black">{savingsPercent.toFixed(1)}%</span>
+    </div>
+  );
+}

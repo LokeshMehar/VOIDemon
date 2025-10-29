@@ -158,3 +158,19 @@ class Node:
         self.is_send_data_back = is_send_data_back
         self.push_mode = push_mode
         self.client_port = client_port
+
+        # Reset metric tracking state — prevents stale baselines leaking across runs
+        self.last_metric_values = {}
+        self.last_metric_sent_round = {}
+        self.last_network_bytes = 0
+        self.last_network_time = time.time()
+        self.node_process = psutil.Process()
+
+        # Fresh quiesce signal for this run
+        import threading
+        self.quiesced_event = threading.Event()
+
+    def close_sessions(self):
+        """Explicitly close connection pools for this node."""
+        try:
+            if hasattr(self, 'session_to_monitoring'):
