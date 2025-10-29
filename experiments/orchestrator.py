@@ -419,3 +419,21 @@ class Experiment:
         self.target_count_range = target_count_range
         self.run_count = run_count
         self.runs = []
+"""
+orchestrator.py — VOIDemon Experiment Orchestrator
+
+The central Flask server that manages the full experiment lifecycle:
+  - Spawns Docker node containers via the Docker SDK
+  - Initialises and boots the gossip cluster
+  - Receives live metric reports from every gossip node via /receive_node_data
+  - Forwards real-time metrics to the Express dashboard backend via /api/live-metrics
+  - Detects convergence and records results in the SQLite database
+  - Provides the Chaos Engine kill notification endpoint /notify_node_killed
+
+Run with:
+    python experiments/orchestrator.py
+
+The orchestrator listens on port 4000 by default (configurable in config.ini).
+"""
+
+import sys
