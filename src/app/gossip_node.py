@@ -198,3 +198,28 @@ def get_metrics_priority_stats():
     node = Node.instance()
 
     if len(node.data) == 0:
+        return json.dumps({"error": "No data available"})
+
+    metrics_sent = node.metrics_sent_count if hasattr(node, 'metrics_sent_count') else 0
+    metrics_filtered = node.metrics_filtered_count if hasattr(node, 'metrics_filtered_count') else 0
+
+    per_round_stats = {}
+    for round_num, stats in node.data_flow_per_round.items():
+        per_round_stats[round_num] = {
+            'metrics_sent': stats.get('metrics_sent', 0),
+            'metrics_filtered': stats.get('metrics_filtered', 0)
+        }
+
+    return json.dumps({
+        'total_metrics_sent': metrics_sent,
+        'total_metrics_filtered': metrics_filtered,
+        'bandwidth_savings_percent': round(
+            100 * metrics_filtered / (metrics_sent + metrics_filtered)
+            if (metrics_sent + metrics_filtered) > 0 else 0, 2
+        ),
+        'per_round_stats': per_round_stats,
+        'priorities': {k: v for k, v in METRIC_PRIORITIES.items()},
+        'deltas': {k: v for k, v in METRIC_DELTAS.items()}
+    })
+
+

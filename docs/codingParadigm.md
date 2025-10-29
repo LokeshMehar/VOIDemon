@@ -19,3 +19,32 @@
 Ultimately, **VOIDemon** is engineered under the philosophy that **Eventual Consistency and Developer Ergonomics are more important than Absolute Precision and Maximum Performance.** 
 
 We trade deep JSON equality for fast Hashes. We trade synchronous DB safety for fast WAL queues. We trade absolute metric accuracy for massive battery savings via VoI. Every decision is specifically calibrated to simulate a volatile, resource-constrained edge environment as accurately and safely as possible on standard developer hardware.
+# Engineering Paradigms & Implementation Trade-offs
+
+This document serves as an exhaustive deep dive into the engineering decisions, architectural patterns, and unavoidable trade-offs made during the implementation of **VOIDemon**. 
+
+It is structured as a Q&A designed for technical interviewers, engineering managers, and systems architects who understand distributed systems theory but need to evaluate the practical, code-level implementation choices.
+
+---
+
+## Part 1: Core Architecture & Frameworks
+
+### 1. Why use Docker containers to simulate the nodes instead of just running multiple Python threads/processes on the host?
+**Decision:** Full containerization via Docker.
+**Trade-off:** Running lightweight Python threads or `multiprocessing` processes would consume significantly less CPU overhead and memory than booting $N$ Docker containers. However, threads share the same network interface, file system, and OS environment. By using Docker, we achieve **true network isolation**. Each node gets its own distinct IP address on the Docker bridge network. This allows the simulation to accurately replicate a physical edge deployment where network latency, dropped packets, and isolated failures occur. Docker also ensures the environment is reproducible across any developer's machine without dependency hell.
+
+```mermaid
+graph TD
+    subgraph Traditional Threading Model
+        P[Python Process]
+        P --> T1[Thread 1]
+        P --> T2[Thread 2]
+        T1 -.-|Shared Memory & IP| T2
+    end
+    
+    subgraph VOIDemon Docker Model
+        D[Docker Engine]
+        D --> C1[Container Node 1<br/>IP: 172.18.0.2]
+        D --> C2[Container Node 2<br/>IP: 172.18.0.3]
+        C1 -.-|Isolated TCP/IP Network| C2
+    end
