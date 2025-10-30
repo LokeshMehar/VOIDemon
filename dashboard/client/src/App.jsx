@@ -145,3 +145,24 @@ export default function App() {
     globalTotalMessages,
     globalFilteredMessages,
     killNode: gossipKillNode,
+  } = useGossipSocket();
+
+  const {
+    config,
+    loading,
+    fetchError,
+    saving,
+    fetchConfig,
+    handleChange,
+    handleSave,
+  } = useConfig();
+
+  // ── Local UI state ───────────────────────────────────────────────────────────
+  const [booting, setBooting] = useState(false);
+  const [toast, setToast] = useState(null);
+  const [selectedNodeId, setSelectedNodeId] = useState(null);
+  const [pendingKills, setPendingKills] = useState(new Set());
+
+  // Fetch config on mount
+  useEffect(() => { fetchConfig(); }, [fetchConfig]);
+

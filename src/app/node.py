@@ -190,3 +190,19 @@ class Node:
 
     def start_gossip_counter(self):
         """OBSOLETE: Gossip counter is now driven by transmit()."""
+        pass
+
+    def start_gossiping(self, target_count, gossip_rate):
+        """Main gossip loop — runs until is_alive is set False."""
+        print("Starting gossiping with target count: {} and gossip rate: {} and length of node list: {}".format(
+            target_count, gossip_rate, len(self.node_list)),
+            flush=True)
+        try:
+            while self.is_alive:
+                if self.push_mode == "1":
+                    print("Pushing data", flush=True)
+                    if self.cycle % 10 == 0 and self.cycle != 0:
+                        self.push_latest_data_and_delete_after_push()
+                self.cycle += 1
+                self.transmit(target_count)
+                time.sleep(gossip_rate)
