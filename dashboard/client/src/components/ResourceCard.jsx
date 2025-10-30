@@ -37,3 +37,31 @@ export function ResourceCard({ label, value, unit = "", icon, isFiltered }) {
           <div className="w-1.5 h-1.5 rounded-full bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.8)] animate-pulse" />
         </div>
       )}
+
+      {/* Label row */}
+      <div className="flex items-center gap-1.5 text-slate-500">
+        {icon}
+        <span className="text-[9px] font-black uppercase tracking-widest">{label}</span>
+      </div>
+
+      {/* Value */}
+      <div className="flex items-baseline gap-1">
+        <span className={`text-xl font-mono font-black transition-colors duration-500 ${isFiltered ? "text-slate-500" : threshold.color}`}>
+          {displayValue}
+        </span>
+        <span className="text-[9px] text-slate-600 font-medium">{unit}</span>
+      </div>
+
+      {/* Progress bar */}
+      <div className="w-full h-1 bg-slate-800/80 rounded-full overflow-hidden">
+        <div
+          className={`h-full rounded-full bar-animate transition-all duration-700 ${threshold.bar}`}
+          style={{ width: `${percent}%` }}
+        />
+      </div>
+
+      {/* Background glow on hover */}
+      <div className={`absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-2xl ${threshold.glow}`} />
+    </div>
+  );
+}

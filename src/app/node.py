@@ -174,3 +174,19 @@ class Node:
         """Explicitly close connection pools for this node."""
         try:
             if hasattr(self, 'session_to_monitoring'):
+                self.session_to_monitoring.close()
+            if hasattr(self, 'gossip_session'):
+                self.gossip_session.close()
+        except Exception as e:
+            logger.error(f"[Session] Error closing node sessions: {e}")
+
+    def get_random_nodes(self, node_list, target_count):
+        """Return a random sample of peers, excluding self."""
+        filtered_nodes = [node for node in node_list if node['ip'] != self.ip]
+        if not filtered_nodes:
+            return []
+        sample_size = min(target_count, len(filtered_nodes))
+        return secrets.SystemRandom().sample(filtered_nodes, sample_size)
+
+    def start_gossip_counter(self):
+        """OBSOLETE: Gossip counter is now driven by transmit()."""
