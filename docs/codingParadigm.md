@@ -48,3 +48,32 @@ graph TD
         D --> C2[Container Node 2<br/>IP: 172.18.0.3]
         C1 -.-|Isolated TCP/IP Network| C2
     end
+```
+
+### 2. Why use Flask (a synchronous web framework) to simulate the P2P Gossip Protocol instead of FastAPI or `asyncio`?
+**Decision:** Flask + multi-threading.
+**Trade-off:** FastAPI or `asyncio` with `aiohttp` would allow a single Python process to handle thousands of concurrent network connections using non-blocking I/O. However, in our architecture, *each node* is isolated in its own Docker container. A single node rarely handles more than 3-5 concurrent peer connections during a gossip tick (defined by the fan-out rate $k=3$). Flask’s simple, synchronous threaded model is more than sufficient for this low-concurrency threshold per-container. It vastly simplifies the mental model of the codebase by avoiding `async/await` colored functions, making the core gossip logic easier for researchers and new contributors to read and modify.
+
+### 3. Why introduce a Node.js/Express API Gateway instead of serving the React app directly from the Python Orchestrator?
+**Decision:** Decoupled Node.js API Gateway.
+**Trade-off:** We could have served the React static files and WebSocket connections directly from the Flask Orchestrator. However, Python (and specifically Flask-SocketIO) notoriously struggles with high-throughput, low-latency WebSocket streaming due to the Global Interpreter Lock (GIL) and event-loop mismatches. By introducing Node.js, we leverage the V8 engine's asynchronous I/O superiority. The Python Orchestrator purely handles heavy data processing and SQLite writes, then pushes a single HTTP payload to Node.js, which flawlessly fans it out to hundreds of connected UI clients via Socket.IO without dropping frames.
+
+### 4. Why use React with Vite and Tailwind instead of a lighter vanilla JS implementation?
+**Decision:** React + Vite.
+**Trade-off:** A vanilla JS implementation with D3.js would result in a smaller bundle size. However, maintaining complex, rapidly updating state (like a live force-directed graph tracking 50 nodes and 200 edges) becomes a DOM-manipulation nightmare in vanilla JS. React’s declarative state model, combined with Vite’s near-instant HMR (Hot Module Replacement), dramatically accelerated development. Tailwind CSS allowed for rapid prototyping of a complex, dark-mode dashboard without maintaining massive stylesheets.
+
+---
+
+## Part 2: Distributed Systems Patterns
+
+### 5. Why utilize the Singleton Pattern for the `Node` state in Python?
+**Decision:** `Singleton` decorator for the core `Node` class.
+**Trade-off:** Singletons are often considered anti-patterns because they introduce global state and make unit testing difficult. However, in our specific Dockerized architecture, each container represents exactly *one* physical node. The Flask HTTP server (which receives incoming gossip) and the background daemon thread (which initiates outgoing gossip) both need read/write access to the exact same peer tracking database and metric state. Passing a shared instance around Flask's request context is unnecessarily complex. The Singleton pattern guarantees that no matter where the `Node` is imported within that specific container, both threads operate on the exact same memory space.
+
+### 6. Why use a Push-Pull Gossip Protocol variant instead of Push-only or Pull-only?
+**Decision:** Push-Pull.
+**Trade-off:** 
+- *Push-only* is fast but causes massive redundant network traffic because nodes blindly broadcast state to peers who might already have it.
+- *Pull-only* minimizes traffic but introduces high latency, as nodes must first query for updates, then request them.
+- *Push-Pull* requires slightly more complex metadata exchange. The initiator sends a small metadata vector (version counters). The receiver calculates the delta, *pulls* what it lacks, and *pushes* what the initiator lacks in a single round-trip. This perfectly balances network efficiency with rapid convergence.
+

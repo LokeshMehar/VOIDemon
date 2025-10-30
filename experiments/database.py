@@ -185,3 +185,20 @@ import configparser
             to_return = self.cursor.lastrowid
             self.connection.commit()
             self.connection.close()
+            return to_return
+        except Exception as e:
+            print("Error DB insert run: {}".format(e))
+            return -1
+
+    def save_query_in_database(self, run_id, node_count, i, failure_percent,
+                               time_to_query, total_messages_for_query, success):
+        try:
+            connection = get_connection()
+            cursor = connection.cursor()
+            cursor.execute(
+                "INSERT INTO query "
+                "(run_id, node_count, query_num, failure_percent, time_to_query, total_messages_for_query, success) "
+                "VALUES (?, ?, ?, ?, ?, ?, ?)",
+                (run_id, node_count, i, failure_percent, time_to_query, total_messages_for_query, success)
+            )
+            connection.commit()
