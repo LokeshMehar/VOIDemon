@@ -437,3 +437,21 @@ The orchestrator listens on port 4000 by default (configurable in config.ini).
 """
 
 import sys
+        self.monitoring_address_ip = monitoring_address_ip
+        self.voidemon_db = db.VoidemonDB()
+        self.query_queue = queue.Queue()
+        self.query_thread = None
+        self.is_send_data_back = is_send_data_back
+        self.push_mode = push_mode
+        self.node_db = db.NodeDB()
+
+    def set_db_id(self, param):
+        self.db_id = param
+
+
+MAX_SPAWN_RETRIES = 5
+
+
+def spawn_node(index, node_list, client, custom_network_name, retries=0):
+    """Spawn a single Docker container for a gossip node, with retry logic."""
+    if retries >= MAX_SPAWN_RETRIES:
