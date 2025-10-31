@@ -77,3 +77,32 @@ graph TD
 - *Pull-only* minimizes traffic but introduces high latency, as nodes must first query for updates, then request them.
 - *Push-Pull* requires slightly more complex metadata exchange. The initiator sends a small metadata vector (version counters). The receiver calculates the delta, *pulls* what it lacks, and *pushes* what the initiator lacks in a single round-trip. This perfectly balances network efficiency with rapid convergence.
 
+### 7. Why use SHA-256 Digests to compare states instead of deep JSON equality checks?
+**Decision:** Cryptographic Hashing for state comparison.
+**Trade-off:** Hashing consumes CPU cycles. However, doing a recursive, deep-key comparison of two large JSON metric objects in Python is extremely slow and memory-intensive. By calculating a SHA-256 digest of the metric state and exchanging only the hash during the metadata phase, nodes can determine if their states differ in $O(1)$ time complexity. This trades a negligible amount of CPU time for a massive gain in speed and network bandwidth.
+
+### 8. Why implement Leaderless Quorum Consensus (LQC) instead of Raft or Paxos for fault detection?
+**Decision:** LQC (3-Strike rule).
+**Trade-off:** Raft and Paxos provide strong consistency and guarantee a single source of truth via leader election. However, edge environments are volatile; leaders die frequently, triggering expensive re-election storms that halt the system. LQC embraces eventual consistency. There is no leader. If Node A detects Node B is dead, it marks it as `Suspect`. Only when the gossip network converges and a mathematical quorum ($N/2 + 1$) agrees the timestamp is stale does the cluster formally consider the node dead. This trades absolute microsecond consistency for massive fault tolerance and zero network blocking.
+
+### 9. Why use physical timestamps for liveness instead of Logical Clocks (Lamport/Vector Clocks)?
+**Decision:** System time timestamps.
+**Trade-off:** In distributed systems, relying on physical clocks is dangerous due to clock drift across servers. Vector clocks perfectly order events causally. However, vector clocks grow linearly with the number of nodes $O(N)$, creating massive overhead in a 1,000-node cluster. Because VOIDemon nodes are simulated on the same physical host (or within NTP-synchronized edge clusters), clock drift is negligible. Using a simple timestamp for the heartbeat ($H_i(t)$) keeps the payload tiny ($O(1)$) while effectively detecting stale connections.
+
+---
+
+## Part 3: Value of Information (VoI) Filtering
+
+### 10. Why use static priority tiers (HIGH, MEDIUM, LOW) instead of a dynamic Machine Learning model for VoI?
+**Decision:** Heuristic Thresholds ($\Delta$ logic).
+**Trade-off:** An ML model could theoretically adapt to network conditions and predict which metrics are most valuable. However, running inference models on resource-constrained edge devices (like a Raspberry Pi) drains the exact battery life we are trying to save. Static heuristic tiers (e.g., CPU = HIGH, Storage = LOW) combined with simple $\Delta$ (delta percentage change) math execute in microseconds, requiring virtually zero CPU overhead while still achieving 60%+ bandwidth savings.
+
+### 11. Doesn't filtering metrics (VoI) violate the concept of "Eventual Consistency"?
+**Decision:** Intentional Stale State.
+**Trade-off:** Yes, technically. If the Storage metric doesn't change by more than 5%, the VoI engine suppresses it. Therefore, peer nodes will hold a slightly outdated Storage value for that node indefinitely. We explicitly trade *absolute data accuracy* for *network survival*. In edge monitoring, knowing that a node's storage went from 45.1% to 45.2% has zero operational value, but transmitting that change costs battery. The VoI engine guarantees that *operationally significant* data is strictly consistent, while static data is allowed to drift within safe, defined tolerances.
+
+---
+
+## Part 4: Database & Orchestration
+
+### 12. Why use SQLite in WAL mode instead of PostgreSQL, Redis, or Time-Series databases (InfluxDB)?
