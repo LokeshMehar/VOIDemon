@@ -202,3 +202,37 @@ import configparser
                 (run_id, node_count, i, failure_percent, time_to_query, total_messages_for_query, success)
             )
             connection.commit()
+parser = configparser.ConfigParser()
+parser.read(os.path.join(os.path.dirname(__file__), 'config.ini'))
+
+DB_FILE = parser.get('database', 'db_file', fallback='voidemon.db')
+
+
+def get_connection():
+    """Open a WAL-mode SQLite connection to the main experiment database."""
+    conn = sqlite3.connect(
+        os.path.join(os.path.dirname(__file__), DB_FILE),
+        check_same_thread=False
+    )
+    conn.execute("PRAGMA journal_mode = WAL;")
+    conn.execute("PRAGMA synchronous = NORMAL;")
+    return conn
+
+
+            connection.close()
+            return True
+        except Exception as e:
+            print("Exception in save_query_in_database: {}".format(e))
+
+    def insert_into_converged_run(self, run_id, convergence_round, convergence_message_count, convergence_time):
+        try:
+            self.connection = get_connection()
+            self.cursor = self.connection.cursor()
+            self.cursor.execute(
+                "UPDATE run SET "
+                "convergence_round = ?, "
+                "convergence_message_count = ?, "
+                "convergence_time = ? "
+                "WHERE id = ?",
+                (convergence_round, convergence_message_count, convergence_time, run_id)
+            )
