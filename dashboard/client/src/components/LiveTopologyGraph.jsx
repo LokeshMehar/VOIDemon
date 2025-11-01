@@ -66,3 +66,37 @@ export function LiveTopologyGraph({ graphData, onSelectNode, killedNodes, pendin
     ctx.stroke();
     ctx.setLineDash([]);
 
+    // Label
+    const labelSize = Math.max(9 / globalScale, 3);
+    ctx.font         = `${isKilled ? "italic " : "600 "}${labelSize}px Inter, sans-serif`;
+    ctx.textAlign    = "center";
+    ctx.textBaseline = "top";
+    ctx.fillStyle    = isKilled ? "#475569" : isSelected ? "#fff" : "rgba(203, 213, 225, 0.9)";
+    ctx.fillText(node.label || node.id, node.x, node.y + r + 4);
+
+    // Killed ✕
+    if (isKilled) {
+      ctx.font      = `bold ${labelSize * 0.9}px monospace`;
+      ctx.fillStyle = "#ef4444";
+      ctx.fillText("✕", node.x, node.y - r * 0.5);
+    }
+
+    // Pending kill indicator
+    if (isPending && !isKilled) {
+      ctx.font      = `bold ${labelSize * 0.9}px monospace`;
+      ctx.fillStyle = "#f59e0b";
+      ctx.fillText("⚡", node.x, node.y - r * 0.5);
+    }
+  }, [killedNodes, selectedNodeId, pendingKills]);
+
+  const nodeCount   = graphData.nodes.length;
+  const linkCount   = graphData.links.length;
+  const aliveCount  = nodeCount - killedNodes.size;
+
+  return (
+    <div className="glass rounded-3xl border border-white/6 overflow-hidden shadow-2xl">
+
+      {/* Graph header */}
+      <div className="px-6 py-4 flex items-center justify-between border-b border-white/5 bg-gradient-to-r from-slate-900/60 to-transparent">
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 rounded-xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center">

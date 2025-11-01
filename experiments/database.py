@@ -236,3 +236,10 @@ def get_connection():
                 "WHERE id = ?",
                 (convergence_round, convergence_message_count, convergence_time, run_id)
             )
+            to_return = self.cursor.lastrowid
+            self.connection.commit()
+            self.connection.close()
+            return to_return
+        except Exception as e:
+            print("Error DB update converged run: {}".format(e))
+            return -1
