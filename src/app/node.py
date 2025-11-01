@@ -206,3 +206,19 @@ class Node:
                 self.cycle += 1
                 self.transmit(target_count)
                 time.sleep(gossip_rate)
+
+def get_new_data():
+    node = Node.instance()
+    
+    # Calculate Bandwidth (Mbps)
+    current_network_bytes = psutil.net_io_counters().bytes_recv + psutil.net_io_counters().bytes_sent
+    current_time = time.time()
+    
+    if node.last_network_bytes == 0:
+        # First call, initialize values and return 0
+        node.last_network_bytes = current_network_bytes
+        node.last_network_time = current_time
+        bandwidth_mbps = 0.0
+    else:
+        delta_bytes = current_network_bytes - node.last_network_bytes
+        delta_time = current_time - node.last_network_time
