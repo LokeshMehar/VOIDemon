@@ -106,3 +106,32 @@ graph TD
 ## Part 4: Database & Orchestration
 
 ### 12. Why use SQLite in WAL mode instead of PostgreSQL, Redis, or Time-Series databases (InfluxDB)?
+**Decision:** SQLite with Write-Ahead Logging (WAL).
+**Trade-off:** PostgreSQL or InfluxDB are industry standards for time-series telemetry. However, VOIDemon is a portable simulation framework. Requiring users to spin up and configure a heavy PostgreSQL cluster just to run a test creates massive friction. SQLite is serverless and embedded in the Python standard library. 
+The standard SQLite database locks the entire file during writes, which would instantly bottleneck our 50-node simulation. By enabling `PRAGMA journal_mode=WAL`, readers and writers can operate concurrently. We trade the robust clustering of Postgres for absolute portability, while WAL mode ensures our high-frequency write batches don't lock up the system.
+
+### 13. Why use a background Thread & Queue for Database Inserts in the Orchestrator?
+**Decision:** Asynchronous Database Worker Thread.
+**Trade-off:** When 50 nodes hit the Orchestrator's `/receive_node_data` endpoint simultaneously, opening 50 concurrent SQLite connections would cause disk I/O thrashing and `database is locked` errors, even with WAL mode. Instead, the Flask endpoints simply drop the JSON payload into an in-memory `queue.Queue`. A dedicated background thread pops payloads in batches of 50 and executes a single bulk SQL `executemany` transaction. We trade real-time persistence (data might sit in memory for 100ms) for a massive increase in throughput and disk safety.
+
+### 14. Why set SQLite `synchronous = NORMAL` instead of `FULL`?
+**Decision:** Reduced fsync() calls.
+**Trade-off:** `FULL` synchronous mode guarantees that if the host machine loses power entirely, the database will not corrupt. However, calling `fsync()` on the SSD 1,000 times a second during a simulation destroys disk write speeds and degrades the physical hardware. `NORMAL` delegates the sync to the OS, vastly improving write speeds. Because this is a simulation and metrics are ephemeral, we accept the incredibly small risk of data loss on power failure to save the user's SSD hardware.
+
+### 15. Why decouple the Orchestrator from the Gossip Network?
+**Decision:** God-view Orchestrator.
+**Trade-off:** We could have made the Orchestrator just another node in the gossip network to collect data. However, making it a peer would influence the stochastic nature of the network (nodes would route through it preferentially). By keeping it isolated, the 10 Docker nodes gossip blindly amongst themselves exactly as they would in the wild. They push data to the Orchestrator out-of-band via a separate HTTP call strictly for analytics and graphing, ensuring the experimental data is not contaminated by observer interference.
+
+---
+
+## Part 5: UI & Frontend Optimization
+
+### 16. Why use `requestAnimationFrame` (RAF) batching instead of standard React `setState` for Socket.IO messages?
+**Decision:** RAF Buffer.
+**Trade-off:** When 50 nodes are gossiping, the Node.js server might emit 100 WebSocket events per second to the React client. If we call `setState()` 100 times a second, React's virtual DOM reconciliation will freeze the browser tab entirely (Layout Thrashing).
+We could use `lodash.throttle`, but that arbitrarily drops data. Instead, we write incoming socket data into a mutable JavaScript Ref object. We then hook into the browser's native `requestAnimationFrame` API to read that object and call `setState` exactly once per monitor refresh rate (typically 60fps). This trades microscopic data immediacy for a buttery-smooth 60fps UI that never drops a frame, regardless of network load.
+
+```mermaid
+flowchart LR
+    S[Socket.IO Server] -- 200 events/sec --> C(Client WebSocket)
+    C -- Writes blindly --> R[(Mutable React Ref Buffer)]

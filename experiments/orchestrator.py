@@ -455,3 +455,21 @@ MAX_SPAWN_RETRIES = 5
 def spawn_node(index, node_list, client, custom_network_name, retries=0):
     """Spawn a single Docker container for a gossip node, with retry logic."""
     if retries >= MAX_SPAWN_RETRIES:
+        print("Failed to spawn node {} after {} retries, giving up".format(index, MAX_SPAWN_RETRIES))
+        return
+    try:
+        new_node = docker_client.containers.run(
+            "voidemon-node", auto_remove=True, detach=True,
+            network_mode=custom_network_name,
+            ports={'5000': node_list[index]["port"]}
+        )
+    except Exception as e:
+        print("Node not spawned: {}".format(e))
+        print("trace: {}".format(traceback.format_exc()))
+        node_list[index]["port"] = get_free_port()
+        spawn_node(index, node_list, client, custom_network_name, retries + 1)
+    else:
+        node_details = client.containers.get(new_node.id)
+        node_list[index] = {
+            "id": node_details.id,
+            "ip": node_details.attrs['NetworkSettings']['Networks']['test']['IPAddress'],
