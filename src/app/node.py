@@ -238,3 +238,19 @@ def get_new_data():
             latest_data = self.data[latest_entry].copy()
         else:
             latest_data = {}
+
+        latest_data[f"{self.ip}:{self.port}"] = get_new_data()
+        self.data[new_time_key] = latest_data
+
+        random_nodes = self.get_random_nodes(self.node_list, target_count)
+
+        for node in random_nodes:
+            self.send_to_node(node, new_time_key)
+
+    def prepare_metadata_and_own_fresh_data(self, time_key):
+        """Package this node's own fresh data + peer counters for metadata exchange."""
+        own_key = f"{self.ip}:{self.port}"
+        time_data = self.data[time_key]
+        own_recent_data = time_data[own_key]
+
+        # Use the already-decided own_recent_data from get_new_data directly
