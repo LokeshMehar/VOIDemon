@@ -105,3 +105,29 @@ export function NodeInspector({ nodeId, nodesInfo, onClose, killedNodes }) {
     </div>
   );
 }
+  const isMemoryFiltered  = appState._isMemoryFiltered;
+  const isNetworkFiltered = appState._isNetworkFiltered;
+  const isStorageFiltered = appState._isStorageFiltered;
+
+  const activeNodeCount = node.active_target || Math.max((node.node_count || 1) - killedNodes.size, 1);
+  const isConverged     = node.ic >= activeNodeCount && node.ic > 0;
+  const isGossiping     = node.ic > 0 && !isConverged;
+
+  const statusLabel = isKilled ? "TERMINATED" : isConverged ? "Converged" : isGossiping ? "Gossiping" : "Idle";
+  const statusStyle = isKilled
+    ? { text: "text-red-400",    bg: "bg-red-500/10",     border: "border-red-500/25",     dot: "bg-red-500"     }
+    : isConverged
+      ? { text: "text-emerald-400", bg: "bg-emerald-500/10", border: "border-emerald-500/25", dot: "bg-emerald-400" }
+      : isGossiping
+        ? { text: "text-indigo-400",  bg: "bg-indigo-500/10",  border: "border-indigo-500/25",  dot: "bg-indigo-400 animate-pulse"  }
+        : { text: "text-slate-400",   bg: "bg-slate-700/30",   border: "border-slate-600/30",   dot: "bg-slate-500"   };
+
+  const nodeTotal    = node.totalMessages || 1;
+  const nodeFiltered = node.filteredMessages || 0;
+  const nodeSavings  = (nodeFiltered / nodeTotal) * 100;
+  const convergePct  = Math.min(100, (node.ic ?? 0) / activeNodeCount * 100);
+
+  const icons = {
+    cpu: "M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z",
+    mem: "M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10",
+    net: "M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4",
