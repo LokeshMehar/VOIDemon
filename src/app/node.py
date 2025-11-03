@@ -254,3 +254,19 @@ def get_new_data():
         own_recent_data = time_data[own_key]
 
         # Use the already-decided own_recent_data from get_new_data directly
+        # to avoid double-filtering that undoes VoI/delta logic.
+        metadata = {
+            key: node_data['counter']
+            for key, node_data in time_data.items()
+            if key != own_key and 'counter' in node_data
+        }
+
+        return {'metadata': metadata, own_key: own_recent_data}
+
+    def prepare_requested_data(self, time_key, requested_keys):
+        """Return the subset of stored data requested by a peer."""
+        requested_data = {}
+        for key in requested_keys:
+            requested_data[key] = self.data[time_key][key]
+        return requested_data
+

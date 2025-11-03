@@ -116,3 +116,32 @@ class VoidemonAnalyticsDB:
         if not os.path.exists(db_path):
             db_path = os.path.join(os.path.dirname(__file__), DB_FILE)
         self.connection = sqlite3.connect(db_path, check_same_thread=False)
+        self.cursor = self.connection.cursor()
+
+    def get_query_success_by_failure_rate(self):
+        try:
+            self.cursor.execute(
+                "SELECT failure_percent, "
+                "AVG(CASE WHEN success = 'True' OR success = '1' THEN 1 ELSE 0 END) "
+                "FROM query GROUP BY failure_percent"
+            )
+            return self.cursor.fetchall()
+        except Exception as e:
+            print("Error (get_query_success_by_failure_rate): {}".format(e))
+            return []
+
+    def get_bandwidth_savings_over_time(self):
+        try:
+            self.cursor.execute(
+                "SELECT round, SUM(metrics_sent), SUM(metrics_filtered) "
+                "FROM round_metrics_stats "
+                "GROUP BY round "
+                "ORDER BY round"
+            )
+            return self.cursor.fetchall()
+        except Exception as e:
+            print("Error (get_bandwidth_savings_over_time): {}".format(e))
+            return []
+
+    def get_total_bandwidth_saved(self):
+        try:
