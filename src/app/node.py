@@ -222,3 +222,19 @@ def get_new_data():
     else:
         delta_bytes = current_network_bytes - node.last_network_bytes
         delta_time = current_time - node.last_network_time
+        finally:
+            # Signal /terminate that the gossip loop has quiesced
+            if self.quiesced_event is not None:
+                self.quiesced_event.set()
+
+    def transmit(self, target_count):
+        """Build and send current state to target_count randomly selected peers."""
+        # Increment round ID (gossip counter) for every round to ensure freshness
+        self.gossip_counter += 1
+        new_time_key = self.gossip_counter
+
+        if self.data:
+            latest_entry = max(self.data.keys(), key=int)
+            latest_data = self.data[latest_entry].copy()
+        else:
+            latest_data = {}

@@ -21,3 +21,21 @@ Post-run visualization suite using Matplotlib.
 
 ### `database.py`
 The database abstraction layer.
+
+- **SSD Safety**: WAL mode + `synchronous = NORMAL` to prevent excessive disk wear during high-throughput writes.
+- **VoidemonDB**: Stores experiment runs, convergence data, per-round flow stats, and VoI efficiency metrics.
+- **NodeDB**: Manages the node state snapshot store.
+
+### `inspect_schema.py`
+A debug utility that prints all table CREATE statements from the database. Useful for verifying the schema after a run.
+
+## ⚙️ Configuration
+
+All simulation parameters live in `config.ini`:
+
+```ini
+[VOIDemonParam]
+node_range      = "[10]"   ; Node cluster size(s) to test
+gossip_rate     = 3        ; Fan-out — number of peers contacted per round
+runs            = 1        ; Number of experiment repetitions
+```
