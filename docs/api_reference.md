@@ -20,3 +20,25 @@ Accepts a JSON payload, serializes it back to INI format, and overwrites `config
 - **Response:** `200 OK`
 
 ### `POST /api/start`
+Proxies the start signal from the dashboard to the Python Orchestrator.
+- **Response:** `200 OK` (Returns the orchestrator's boot confirmation)
+
+### `POST /api/kill-node/:ip/:port`
+The **Chaos Engine** endpoint. Sends a hard termination signal to a specific docker container to simulate hardware failure.
+- **Parameters:** `ip` (string), `port` (string)
+- **Response:** `200 OK` (Or `500 Server Error` if the node is already dead or unreachable)
+
+```mermaid
+sequenceDiagram
+    participant UI as Dashboard (User)
+    participant GW as API Gateway (:5000)
+    participant N as Node Flask Server (Target)
+    participant O as Orchestrator (:4000)
+    
+    UI->>GW: POST /api/kill-node/:ip/:port
+    GW->>N: POST /terminate
+    N-->>GW: 200 OK
+    Note over N: sys.exit(0) triggered<br/>Container dies
+    GW->>O: POST /notify_node_killed
+    O-->>GW: 200 OK
+```

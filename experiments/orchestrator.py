@@ -473,3 +473,21 @@ def spawn_node(index, node_list, client, custom_network_name, retries=0):
         node_list[index] = {
             "id": node_details.id,
             "ip": node_details.attrs['NetworkSettings']['Networks']['test']['IPAddress'],
+            "port": node_details.attrs['NetworkSettings']['Ports']['5000/tcp'][0]['HostPort']
+        }
+
+
+def spawn_multiple_nodes(run):
+    """Spawn all node containers for this run in parallel."""
+    network_name = "test"
+    from_index = 0
+    if run.node_list is None:
+        run.node_list = [None] * run.node_count
+    elif len(run.node_list) == run.node_count:
+        return  # Nodes already spawned
+    else:
+        from_index = len(run.node_list)
+        run.node_list = run.node_list + [None] * (run.node_count - len(run.node_list))
+    client = docker.DockerClient()
+    for i in range(from_index, run.node_count):
+        run.node_list[i] = {}
