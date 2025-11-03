@@ -100,3 +100,37 @@ export function LiveTopologyGraph({ graphData, onSelectNode, killedNodes, pendin
       <div className="px-6 py-4 flex items-center justify-between border-b border-white/5 bg-gradient-to-r from-slate-900/60 to-transparent">
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 rounded-xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center">
+            <svg className="w-4 h-4 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17H3a2 2 0 01-2-2V5a2 2 0 012-2h14a2 2 0 012 2v10a2 2 0 01-2 2h-2" />
+            </svg>
+          </div>
+          <div>
+            <h2 className="text-white font-bold text-sm tracking-tight">Network Topology</h2>
+            <p className="text-[10px] text-slate-500 font-medium">Live force-directed cluster graph</p>
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          {[
+            { label: "Nodes",  value: nodeCount,  color: "text-indigo-400" },
+            { label: "Active", value: aliveCount,  color: "text-emerald-400" },
+            { label: "Links",  value: linkCount,  color: "text-cyan-400" },
+          ].map(({ label, value, color }) => (
+            <div key={label} className="glass px-3 py-1.5 rounded-lg text-center min-w-[60px]">
+              <p className={`text-sm font-mono font-black ${color}`}>{value}</p>
+              <p className="text-[9px] text-slate-600 font-medium uppercase tracking-wider">{label}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Force graph canvas */}
+      <div
+        className="relative"
+        style={{ height: 480, background: "radial-gradient(ellipse at 50% 50%, #0d1b2e 0%, #020617 70%)" }}
+      >
+        {nodeCount === 0 ? (
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-3">
+            <svg className="w-10 h-10 text-slate-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M8.111 16.404a5.5 5.5 0 017.778 0M12 20h.01m-7.08-7.071c3.904-3.905 10.236-3.905 14.141 0M1.394 9.393c5.857-5.857 15.355-5.857 21.213 0" />
+            </svg>
+            <p className="text-slate-600 font-mono text-xs animate-pulse">Awaiting orchestrator data stream...</p>

@@ -187,3 +187,24 @@ export default function App() {
           <StatCard
             label="Data Transferred"
             value={formatBytes(totalDataBytes)}
+            sub="Across all nodes"
+            accentClass="bg-cyan-500/10 text-cyan-400"
+            iconPath="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"
+            delay={240}
+          />
+        </div>
+
+        {/* ── Action Bar ───────────────────────────────────────────────────────── */}
+        <div className="fade-in fade-in-delay-2 flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+          <button
+            id="btn-save-config"
+            onClick={onSave}
+            disabled={saving || booting || !config}
+            className="sm:w-auto px-6 py-3.5 rounded-xl glass border border-white/8 hover:bg-white/5 hover:border-white/15 text-white font-bold text-sm transition-all duration-200 shadow-md active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            {saving ? (
+              <span className="flex items-center gap-2">
+                <svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+                </svg>
