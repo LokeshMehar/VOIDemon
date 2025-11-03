@@ -72,3 +72,40 @@ flowchart LR
     subgraph Container: voidemon-node
         direction TB
         F[Flask Server] -->|Incoming Gossip| S[(Singleton Node State)]
+        D[Daemon Thread] -->|Read State| S
+        D -->|Outgoing Gossip| P((Peer Nodes))
+        P -->|Push/Pull| F
+    end
+```
+
+---
+
+## 2. The Orchestrator (`experiments/`)
+
+The Python orchestrator manages the lifecycle of the simulation. **It does not participate in the gossip network.** It acts purely as a God-view observer.
+
+### 2.1 Dynamic Bootstrapping (`orchestrator.py`)
+Using the Docker SDK, the orchestrator reads the `config.ini` file, calculates the requested number of nodes, and dynamically spawns that many `voidemon-node` containers. It maps their internal ports (5000) to random available host ports and injects the topology list into each container so they know who to gossip with.
+
+### 2.2 Data Aggregation & Persistence
+As nodes gossip, they independently stream their updated state views to the orchestrator's `/receive_node_data` endpoint. The orchestrator batches these updates and writes them to the `voidemon.db` SQLite database.
+- **WAL Mode:** To handle the massive concurrency of dozens of nodes hammering the database simultaneously, VOIDemon utilizes SQLite Write-Ahead Logging (WAL) mode, ensuring SSD safety and preventing lock contention.
+
+### 2.3 `analytics.py`
+A post-run script that parses the SQLite database using Pandas and Matplotlib to generate the bandwidth, battery, and convergence graphs based on the theoretical models.
+
+---
+
+## 3. The API Gateway (`dashboard/api/`)
+
+A Node.js / Express server that bridges the Python backend and the React frontend.
+
+- **Config Proxy:** Reads and writes the `config.ini` file, exposing it as a REST JSON endpoint (`GET/POST /api/config`).
+- **Live Stream (Socket.IO):** The orchestrator pushes database batch updates to the Express server, which then broadcasts them via WebSockets to all connected React clients. This completely decouples the heavy SQLite write operations from the real-time UI.
+- **Chaos Gateway:** Proxies the "Kill Node" command from the frontend directly to the specific Docker container's IP/Port.
+
+```mermaid
+sequenceDiagram
+    participant DB as SQLite WAL
+    participant Orch as Python Orchestrator
+    participant API as Node.js Gateway
