@@ -42,3 +42,25 @@ sequenceDiagram
     GW->>O: POST /notify_node_killed
     O-->>GW: 200 OK
 ```
+
+### WebSockets (`Socket.IO`)
+The Gateway exposes a Socket.IO server on the same port.
+- **Event `run_started`**: Emitted when the orchestrator boots the cluster. Contains the initial topology list (IPs, Ports, Node IDs).
+- **Event `new_metric`**: Emitted multiple times per second as nodes gossip. Contains the updated state, round number, and VoI efficiency metrics for a specific node.
+
+---
+
+## 2. Python Orchestrator (Flask)
+
+The Orchestrator runs on **Port 4000**. It controls the Docker daemon and receives data from the nodes.
+
+### `POST /start`
+Reads `config.ini`, wipes the `voidemon.db` tables, spawns the Docker containers, and kicks off the simulation run.
+
+```mermaid
+sequenceDiagram
+    participant O as Orchestrator
+    participant D as Docker Daemon
+    participant N as Gossip Nodes
+    
+    O->>O: Parse config.ini
