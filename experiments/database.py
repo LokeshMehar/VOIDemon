@@ -243,3 +243,20 @@ def get_connection():
         except Exception as e:
             print("Error DB update converged run: {}".format(e))
             return -1
+def insert_into_round_of_node(run_id, ip, port, this_round, nd, fd, rm, ic, bytes_of_data):
+    """Upsert a single round-of-node record (delete + insert for idempotency)."""
+    try:
+        connection = get_connection()
+        cursor = connection.cursor()
+        cursor.execute(
+            "DELETE FROM round_of_node WHERE run_id = ? AND ip = ? AND port = ? AND round = ?",
+            (run_id, ip, port, this_round)
+        )
+        cursor.execute(
+            "INSERT INTO round_of_node "
+            "(run_id, ip, port, round, nd, fd, rm, ic, bytes_of_data) "
+            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            (run_id, ip, port, this_round, nd, fd, rm, ic, bytes_of_data)
+        )
+        connection.commit()
+        connection.close()
