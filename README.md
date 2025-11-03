@@ -112,3 +112,24 @@ Instead of broadcasting every metric on every tick, VOIDemon assigns priority ti
 ## 🏗️ System Architecture
 
 <p align="center">
+  <img src="docs/architecture.svg" alt="VOIDemon System Architecture" width="100%"/>
+</p>
+
+---
+
+## 📚 Comprehensive Documentation
+
+To understand the deep technical implementation and theoretical models backing VOIDemon, please explore our comprehensive documentation directory:
+
+| Topic | Description |
+|---|---|
+| [**Theory & Concepts**](docs/theory_and_concepts.md) | Deep dive into the Stochastic Gossip push-pull protocol, the VoI filtering algorithm, math models, and Leaderless Quorum Consensus. |
+| [**System Architecture**](docs/system_architecture.md) | A complete breakdown of the 4-layer stack: Node Cluster, Python Orchestrator, Node.js API Gateway, and React Dashboard. |
+| [**Engineering Paradigms**](docs/codingParadigm.md) | Detailed Q&A covering the massive architectural trade-offs, implementation choices, and system-level preferences (Docker, SQLite WAL, React RAF, etc.). |
+| [**API Reference**](docs/api_reference.md) | Detailed documentation on the REST endpoints and WebSocket (Socket.IO) event streams. |
+| [**Getting Started**](docs/getting_started.md) | Step-by-step instructions for installing dependencies, configuring simulations, and booting the Dockerized network. |
+
+---
+
+## 📂 Project Structure
+

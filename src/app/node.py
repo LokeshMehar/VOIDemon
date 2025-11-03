@@ -270,3 +270,19 @@ def get_new_data():
             requested_data[key] = self.data[time_key][key]
         return requested_data
 
+    def update_own_data(self, updates, new_time_key):
+        """Merge incoming peer updates into local data store."""
+        for u_key in updates:
+            self.data_flow_per_round.setdefault(self.cycle, {})
+            if u_key in self.data[new_time_key]:
+                self.data_flow_per_round[self.cycle].setdefault('fd', 0)
+                self.data_flow_per_round[self.cycle]['fd'] += 1
+            else:
+                self.data_flow_per_round[self.cycle].setdefault('nd', 0)
+                self.data_flow_per_round[self.cycle].setdefault('fd', 0)
+                self.data_flow_per_round[self.cycle]['nd'] += 1
+                self.data_flow_per_round[self.cycle]['fd'] += 1
+            self.data[new_time_key][u_key] = updates[u_key]
+
+    def get_filtered_data_by_priority(self, full_data):
+        """Apply VoI priority filtering to outgoing gossip data."""
