@@ -145,3 +145,32 @@ class VoidemonAnalyticsDB:
 
     def get_total_bandwidth_saved(self):
         try:
+            self.cursor.execute(
+                "SELECT SUM(metrics_sent), SUM(metrics_filtered) "
+                "FROM round_metrics_stats"
+            )
+            return self.cursor.fetchone()
+        except Exception as e:
+            print("Error (get_total_bandwidth_saved): {}".format(e))
+            return (0, 0)
+
+    def get_transmissions_by_metric_type(self):
+        try:
+            self.cursor.execute(
+                "SELECT metric_type, "
+                "SUM(CASE WHEN was_sent = 1 THEN 1 ELSE 0 END) as sent, "
+                "SUM(CASE WHEN was_sent = 0 THEN 1 ELSE 0 END) as filtered "
+                "FROM metric_transmissions "
+                "GROUP BY metric_type"
+            )
+            return self.cursor.fetchall()
+        except Exception as e:
+            print("Error (get_transmissions_by_metric_type): {}".format(e))
+            return []
+
+
+def plot_query_success_vs_failure_rate(analytics_db):
+    data = analytics_db.get_query_success_by_failure_rate()
+    if not data:
+        print("No data for Query Success vs Failure Rate.")
+        return
