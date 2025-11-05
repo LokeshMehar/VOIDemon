@@ -491,3 +491,21 @@ def spawn_multiple_nodes(run):
     client = docker.DockerClient()
     for i in range(from_index, run.node_count):
         run.node_list[i] = {}
+        run.node_list[i]["port"] = get_free_port()
+    Parallel(n_jobs=-1, prefer="threads")(
+        delayed(spawn_node)(i, run.node_list, client, network_name) for i in range(from_index, run.node_count)
+    )
+
+
+def nodes_are_ready(run):
+    for i in range(0, run.node_count):
+        if docker_client.containers.get(run.node_list[i]['id']).status != "running":
+            return False
+        run.node_list[i]["is_alive"] = True
+    return True
+
+
+def restart_node(docker_id):
+    try:
+        docker_client.containers.get(docker_id).restart()
+    except Exception as e:

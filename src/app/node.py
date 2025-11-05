@@ -286,3 +286,19 @@ def get_new_data():
 
     def get_filtered_data_by_priority(self, full_data):
         """Apply VoI priority filtering to outgoing gossip data."""
+        
+        # Avoid division by zero
+        if delta_time > 0:
+            bandwidth_mbps = (delta_bytes * 8) / (delta_time * 1024 * 1024)
+        else:
+            bandwidth_mbps = 0.0
+            
+        node.last_network_bytes = current_network_bytes
+        node.last_network_time = current_time
+    
+    # Calculate Storage (Usage %)
+    storage_percent = psutil.disk_usage('/').percent
+    
+    # Get current node-specific resource usage
+    # (Using non-blocking cpu_percent() to avoid hanging the gossip thread)
+    cpu_usage = node.node_process.cpu_percent(interval=None)
