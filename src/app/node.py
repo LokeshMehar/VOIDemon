@@ -302,3 +302,19 @@ def get_new_data():
     # Get current node-specific resource usage
     # (Using non-blocking cpu_percent() to avoid hanging the gossip thread)
     cpu_usage = node.node_process.cpu_percent(interval=None)
+        filtered_data = full_data.copy()
+        # First cycle — always send everything to bootstrap the network
+        if self.cycle <= 1:
+            for metric in METRIC_PRIORITIES:
+                self.metric_last_sent[metric] = self.cycle
+            return filtered_data
+
+        if "appState" in filtered_data:
+            app_state = filtered_data["appState"].copy()
+            for metric, priority in METRIC_PRIORITIES.items():
+                last_sent = self.metric_last_sent.get(metric, 0)
+                if (self.cycle - last_sent) < priority:
+                    if metric in app_state:
+                        app_state[metric] = "not_updated"
+                else:
+                    self.metric_last_sent[metric] = self.cycle

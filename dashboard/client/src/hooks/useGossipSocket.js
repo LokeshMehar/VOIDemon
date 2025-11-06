@@ -141,3 +141,43 @@ export function useGossipSocket() {
   const rafHandleRef    = useRef(null);
 
   // ── React state — only updated at frame rate ────────────────────────────────
+  const [graphData, setGraphData] = useState({ nodes: [], links: [], nodes_info: {} });
+  const [killedNodes, setKilledNodes]           = useState(new Set());
+  const [globalTotalMessages, setGlobalTotal]   = useState(0);
+  const [globalFilteredMessages, setGlobalFiltered] = useState(0);
+
+  // Derived counters accumulated between flushes — using refs to avoid
+  // capturing stale closure values in the RAF callback.
+  const pendingTotalRef    = useRef(0);
+  const pendingFilteredRef = useRef(0);
+
+  // ── helpers ─────────────────────────────────────────────────────────────────
+
+  /**
+   * Flush the mutable refs into React state.  Called by the RAF loop so that
+   * React re-renders happen at most once per animation frame, regardless of
+   * how many socket messages arrived.
+   */
+  const flushToReact = useCallback(() => {
+    const nodesMap = nodesMapRef.current;
+    const linksSet = linksSetRef.current;
+    const killedSet = killedNodesRef.current;
+
+    // Build validated link list — sever any edge touching a dead/struck node
+    const validLinks = Array.from(linksSet).map(k => {
+      const [source, target] = k.split('->');
+      return { source, target };
+    }).filter(link => {
+      const sStrikes = strikesMapRef.current.get(link.source) || 0;
+      const tStrikes = strikesMapRef.current.get(link.target) || 0;
+      const isSourceKilled = killedSet.has(link.source) || (nodesMap.get(link.source)?.isDead);
+      const isTargetKilled = killedSet.has(link.target) || (nodesMap.get(link.target)?.isDead);
+      return !isSourceKilled && !isTargetKilled && sStrikes < 3 && tStrikes < 3;
+    });
+
+    setGraphData({
+      nodes: Array.from(nodesMap.values()),
+      links: validLinks,
+      nodes_info: Object.fromEntries(nodesMap),
+    });
+
