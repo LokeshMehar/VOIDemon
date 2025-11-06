@@ -250,3 +250,24 @@ export default function App() {
             <div className="glass rounded-3xl p-16 flex flex-col items-center justify-center gap-5">
               <div className="relative">
                 <div className="absolute inset-0 bg-indigo-500/20 rounded-full blur-xl animate-pulse" />
+                <Spinner />
+              </div>
+              <div className="text-center">
+                <p className="text-xs font-mono text-slate-500 uppercase tracking-widest">Querying Node Config</p>
+                <p className="text-[10px] text-slate-700 mt-1">Connecting to orchestrator...</p>
+              </div>
+            </div>
+          ) : fetchError && !config ? (
+            <div className="glass rounded-3xl border border-red-500/20 p-16 flex flex-col items-center justify-center gap-5 text-center">
+              <div className="w-14 h-14 rounded-2xl bg-red-500/10 flex items-center justify-center border border-red-500/20">
+                <svg className="w-7 h-7 text-red-500/70" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+              </div>
+              <div>
+                <p className="text-red-400 font-bold text-sm mb-1">Orchestrator Offline</p>
+                <p className="text-red-500/50 font-mono text-[11px]">{fetchError}</p>
+              </div>
+              <button
+                onClick={fetchConfig}
+                className="px-5 py-2 rounded-xl bg-red-500/10 hover:bg-red-500/20 text-red-400 text-xs font-bold uppercase tracking-widest border border-red-500/20 transition-all active:scale-95"
