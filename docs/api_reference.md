@@ -64,3 +64,25 @@ sequenceDiagram
     participant N as Gossip Nodes
     
     O->>O: Parse config.ini
+    O->>O: Clean voidemon.db
+    O->>D: Create 'test' bridge network
+    O->>D: Spawn N containers (voidemon-node)
+    D-->>O: Return container IPs/Ports
+    O->>N: Inject complete topology list
+    Note over N: Nodes begin independent<br/>Gossip loops
+```
+
+### `POST /receive_node_data`
+*Internal endpoint used by the Gossip Nodes.*
+As nodes execute gossip rounds, they push their current worldview to this endpoint. The orchestrator batches these and writes them to the SQLite database.
+- **Query Params:** `?ip=...&port=...&round=...`
+- **Body:** The complete JSON state of the node.
+
+### `POST /notify_node_killed`
+*Internal endpoint used by the API Gateway Chaos Engine.*
+Tells the orchestrator that a node was intentionally killed, allowing the orchestrator to adjust its expected convergence target size so the simulation doesn't hang waiting for a dead node.
+
+---
+
+## 3. P2P Gossip Node (Flask inside Docker)
+

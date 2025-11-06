@@ -229,3 +229,24 @@ export default function App() {
               </span>
             ) : (
               <span className="flex items-center justify-center gap-2">
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                </svg>
+                BOOT DISTRIBUTED NETWORK
+              </span>
+            )}
+          </button>
+        </div>
+
+        {/* ── Config Sections ───────────────────────────────────────────────────── */}
+        <section className="fade-in fade-in-delay-3 space-y-4">
+          <h2 className="text-[11px] font-black text-slate-500 uppercase tracking-[0.3em] mb-5 flex items-center gap-3">
+            <div className="h-px flex-1 bg-gradient-to-r from-transparent to-slate-800" />
+            Cluster Configuration
+            <div className="h-px flex-1 bg-gradient-to-l from-transparent to-slate-800" />
+          </h2>
+
+          {loading ? (
+            <div className="glass rounded-3xl p-16 flex flex-col items-center justify-center gap-5">
+              <div className="relative">
+                <div className="absolute inset-0 bg-indigo-500/20 rounded-full blur-xl animate-pulse" />
