@@ -509,3 +509,21 @@ def restart_node(docker_id):
     try:
         docker_client.containers.get(docker_id).restart()
     except Exception as e:
+        print("Error restarting container: {}".format(e))
+
+
+def reset_node(ip, port, docker_id):
+    try:
+        time.sleep(random.uniform(0.01, 0.05))
+        session.get("http://{}:{}/reset_node".format(ip, port), timeout=30)
+    except Exception as e:
+        print("Error resetting node: {}".format(e))
+        restart_node(docker_id)
+
+
+@orchestrator.route('/delete_nodes', methods=['GET'])
+def delete_all_nodes():
+    """Force-remove all running voidemon-node containers."""
+    to_remove = docker_client.containers.list(filters={"ancestor": "voidemon-node"})
+    for node in to_remove:
+        node.remove(force=True)
