@@ -225,3 +225,28 @@ def get_metrics_priority_stats():
 
 if __name__ == "__main__":
     gossip_app.run(host='0.0.0.0', debug=True, threaded=True)
+    sender_data = data[sender_key]
+    if len(node.data) == 0:
+        # Node doesn't store any data yet — request everything
+        return metadata.keys()
+    latest_entry = max(node.data.keys(), key=int)
+    all_keys = set().union(node.data[latest_entry].keys(), metadata.keys())
+    all_keys.discard(sender_key)
+    node.data_flow_per_round.setdefault(node.cycle, {})
+    if sender_key in node.data[latest_entry]:
+        node.data_flow_per_round[node.cycle].setdefault('fd', 0)
+        node.data_flow_per_round[node.cycle]['fd'] += 1
+    else:
+        node.data_flow_per_round[node.cycle].setdefault('nd', 0)
+        node.data_flow_per_round[node.cycle].setdefault('fd', 0)
+        node.data_flow_per_round[node.cycle]['nd'] += 1
+        node.data_flow_per_round[node.cycle]['fd'] += 1
+
+    node.data[latest_entry][sender_key] = sender_data
+
+    ips_to_update = []
+    data_to_send = {}
+    for key in all_keys:
+        if key in node.data[latest_entry] and key in metadata:
+            if ('counter' not in node.data[latest_entry][key]) or (
+                    float(metadata[key]) > float(node.data[latest_entry][key]['counter'])):
