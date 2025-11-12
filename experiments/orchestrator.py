@@ -527,3 +527,21 @@ def delete_all_nodes():
     to_remove = docker_client.containers.list(filters={"ancestor": "voidemon-node"})
     for node in to_remove:
         node.remove(force=True)
+    return "OK"
+
+
+def restart_all_nodes(run):
+    """Restart all node containers in parallel."""
+    start = time.time()
+    with concurrent.futures.ThreadPoolExecutor(max_workers=run.node_count) as executor:
+        for i in range(0, run.node_count):
+            executor.submit(restart_node, run.node_list[i]["id"])
+    print("Restart time: {}".format(time.time() - start), flush=True)
+
+
+def start_node(index, run, database_address, monitoring_address, ip, retries=0):
+    """Send the /start_node POST to initialise a node container's gossip loop."""
+    if retries > 5:
+        print(f"Giving up starting node {index} after 5 retries.")
+        return
+    to_send = {

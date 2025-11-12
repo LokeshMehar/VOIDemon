@@ -131,3 +131,29 @@ export function NodeInspector({ nodeId, nodesInfo, onClose, killedNodes }) {
     cpu: "M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z",
     mem: "M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10",
     net: "M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4",
+    disk: "M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4",
+  };
+
+  const mkIcon = (d) => (
+    <svg className="w-2.5 h-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+      <path strokeLinecap="round" strokeLinejoin="round" d={d} />
+    </svg>
+  );
+
+  const anyFiltered = isCpuFiltered || isMemoryFiltered || isNetworkFiltered || isStorageFiltered;
+
+  return (
+    <div
+      className="fixed top-0 right-0 h-full w-80 z-40 flex flex-col slide-in-right"
+      style={{
+        background: "rgba(7, 11, 20, 0.94)",
+        backdropFilter: "blur(28px)",
+        WebkitBackdropFilter: "blur(28px)",
+        borderLeft: "1px solid rgba(255, 255, 255, 0.06)",
+        boxShadow: "-32px 0 80px rgba(0,0,0,0.9)",
+      }}
+    >
+      {/* ── Header ────────────────────────────────────────────────────────────── */}
+      <div className="px-5 pt-6 pb-5 border-b border-white/5 flex items-start justify-between gap-3">
+        <div className="flex-1 min-w-0">
+          {/* Breadcrumb */}
