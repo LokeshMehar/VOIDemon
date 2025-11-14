@@ -318,3 +318,19 @@ def get_new_data():
                         app_state[metric] = "not_updated"
                 else:
                     self.metric_last_sent[metric] = self.cycle
+
+            filtered_data["appState"] = app_state
+
+        return filtered_data
+
+    def push_latest_data_and_delete_after_push(self):
+        """Push accumulated data to the monitoring server, keeping only the latest entry."""
+        if self.data:
+            latest_time_key = max(self.data.keys())
+            latest_data = self.data[latest_time_key]
+            to_send = self.data.copy()
+            to_push = {k: v for k, v in to_send.items() if k != latest_time_key}
+            
+            try:
+                res = self.session_to_monitoring.post(
+                    'http://{}:{}/push_data_to_database?ip={}&port={}&round={}'.format(
