@@ -134,3 +134,37 @@ export function LiveTopologyGraph({ graphData, onSelectNode, killedNodes, pendin
               <path strokeLinecap="round" strokeLinejoin="round" d="M8.111 16.404a5.5 5.5 0 017.778 0M12 20h.01m-7.08-7.071c3.904-3.905 10.236-3.905 14.141 0M1.394 9.393c5.857-5.857 15.355-5.857 21.213 0" />
             </svg>
             <p className="text-slate-600 font-mono text-xs animate-pulse">Awaiting orchestrator data stream...</p>
+            <p className="text-slate-700 text-[10px]">Boot the network to begin</p>
+          </div>
+        ) : (
+          <ForceGraph2D
+            ref={graphRef}
+            graphData={graphData}
+            nodeCanvasObject={paintNode}
+            nodePointerAreaPaint={(node, color, ctx) => {
+              ctx.beginPath();
+              ctx.arc(node.x, node.y, 14, 0, 2 * Math.PI);
+              ctx.fillStyle = color;
+              ctx.fill();
+            }}
+            onNodeClick={node => onSelectNode(node.id)}
+            linkColor={link =>
+              killedNodes.has(link.source.id) || killedNodes.has(link.target.id)
+                ? "rgba(239, 68, 68, 0.04)"
+                : "rgba(99, 102, 241, 0.15)"
+            }
+            linkWidth={1.5}
+            linkDirectionalParticles={2}
+            linkDirectionalParticleWidth={2.5}
+            linkDirectionalParticleColor={() => "rgba(99, 102, 241, 0.5)"}
+            backgroundColor="transparent"
+            height={480}
+            cooldownTicks={100}
+            d3AlphaDecay={0.01}
+            d3VelocityDecay={0.3}
+          />
+        )}
+      </div>
+
+      {/* Legend bar */}
+      <div className="px-6 py-3 border-t border-white/5 bg-slate-950/30 flex items-center gap-6">
