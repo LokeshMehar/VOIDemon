@@ -86,3 +86,13 @@ Tells the orchestrator that a node was intentionally killed, allowing the orches
 
 ## 3. P2P Gossip Node (Flask inside Docker)
 
+Each node runs its own Flask server mapped dynamically from an internal container Port 5000 to an available host port (e.g., 60592).
+
+### `POST /gossip`
+The core peer-to-peer synchronization endpoint.
+1. The initiating node sends a metadata vector (Counters + SHA256 Digests).
+2. The receiving node calculates the delta.
+3. The receiving node returns a JSON payload containing the full state for objects the initiator was missing, and requests full state for objects the receiver is missing.
+
+### `POST /terminate`
+When hit, the Flask server calls `sys.exit(0)`. This violently kills the python process, shutting down the container. Used by the Chaos Engine to test the Leaderless Quorum Consensus failure detection.

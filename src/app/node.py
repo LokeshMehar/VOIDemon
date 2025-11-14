@@ -334,3 +334,19 @@ def get_new_data():
             try:
                 res = self.session_to_monitoring.post(
                     'http://{}:{}/push_data_to_database?ip={}&port={}&round={}'.format(
+                        self.monitoring_address, self.client_port,
+                        self.ip, self.port, self.cycle
+                    ),
+                    json=to_push,
+                    timeout=5
+                )
+                if res.status_code < 400:
+                    # Successful push, prune local history
+                    self.data = {latest_time_key: latest_data}
+                else:
+                    logger.error(f"[Prune] Push failed with status {res.status_code}. Retaining history.")
+            except Exception as e:
+                logger.error(f"[Prune] Push exception: {e}. Retaining history.")
+
+    def send_to_node(self, n, new_time_key):
+        """Push-pull gossip exchange with peer node n."""
