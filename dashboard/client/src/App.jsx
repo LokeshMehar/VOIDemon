@@ -271,3 +271,24 @@ export default function App() {
               <button
                 onClick={fetchConfig}
                 className="px-5 py-2 rounded-xl bg-red-500/10 hover:bg-red-500/20 text-red-400 text-xs font-bold uppercase tracking-widest border border-red-500/20 transition-all active:scale-95"
+              >
+                Retry Connection
+              </button>
+            </div>
+          ) : config && (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {Object.entries(config).map(([sk, sd]) => (
+                <SectionCard key={sk} sectionKey={sk} sectionData={sd} onChange={handleChange} />
+              ))}
+            </div>
+          )}
+        </section>
+
+        {/* ── Live Topology Graph ───────────────────────────────────────────────── */}
+        <section className="fade-in fade-in-delay-4">
+          <LiveTopologyGraph
+            graphData={graphData}
+            onSelectNode={setSelectedNodeId}
+            killedNodes={killedNodes}
+            pendingKills={pendingKills}
+            onKillNode={handleKillNode}
