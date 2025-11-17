@@ -181,3 +181,43 @@ export function useGossipSocket() {
       nodes_info: Object.fromEntries(nodesMap),
     });
 
+    // Flush accumulated message counters
+    if (pendingTotalRef.current > 0 || pendingFilteredRef.current > 0) {
+      setGlobalTotal(v => v + pendingTotalRef.current);
+      setGlobalFiltered(v => v + pendingFilteredRef.current);
+      pendingTotalRef.current    = 0;
+      pendingFilteredRef.current = 0;
+    }
+
+    pendingFlushRef.current = false;
+  }, []);
+
+  /**
+   * Schedule a single RAF flush.  Multiple calls within the same frame are
+   * collapsed into one.
+   */
+  const scheduleFlush = useCallback(() => {
+    if (pendingFlushRef.current) return;
+    pendingFlushRef.current = true;
+    rafHandleRef.current = requestAnimationFrame(flushToReact);
+  }, [flushToReact]);
+
+  // ── keep killedNodesRef in sync with killedNodes state ─────────────────────
+  useEffect(() => {
+    killedNodesRef.current = killedNodes;
+  }, [killedNodes]);
+
+  // ── socket lifecycle ────────────────────────────────────────────────────────
+  useEffect(() => {
+    const socket = io(SOCKET_URL, { transports: ["websocket"] });
+
+    // ── run_started: full reset ──────────────────────────────────────────────
+    socket.on("run_started", (p) => {
+      // Cancel any pending RAF flush from the previous run
+      if (rafHandleRef.current) cancelAnimationFrame(rafHandleRef.current);
+      pendingFlushRef.current = false;
+
+      nodesMapRef.current   = new Map();
+      linksSetRef.current   = new Set();
+      strikesMapRef.current = new Map();
+
