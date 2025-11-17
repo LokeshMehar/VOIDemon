@@ -292,3 +292,24 @@ export default function App() {
             killedNodes={killedNodes}
             pendingKills={pendingKills}
             onKillNode={handleKillNode}
+            selectedNodeId={selectedNodeId}
+          />
+        </section>
+
+        {/* ── Footer ───────────────────────────────────────────────────────────── */}
+        <footer className="text-center py-4 border-t border-white/5">
+          <p className="text-[10px] font-mono text-slate-700 tracking-widest uppercase">
+            VOIDemon v1.0 · Distributed Gossip Monitoring · MIT License
+          </p>
+        </footer>
+
+      </div>
+
+      {/* ── Node Inspector side panel ─────────────────────────────────────────── */}
+      {selectedNodeId && (
+        <NodeInspector
+          nodeId={selectedNodeId}
+          nodesInfo={graphData.nodes_info}
+          onClose={() => setSelectedNodeId(null)}
+          killedNodes={killedNodes}
+        />

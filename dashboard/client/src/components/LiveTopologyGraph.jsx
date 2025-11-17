@@ -168,3 +168,37 @@ export function LiveTopologyGraph({ graphData, onSelectNode, killedNodes, pendin
 
       {/* Legend bar */}
       <div className="px-6 py-3 border-t border-white/5 bg-slate-950/30 flex items-center gap-6">
+        {[
+          { color: "bg-emerald-500",  label: "Converged"  },
+          { color: "bg-indigo-500",   label: "Gossiping"  },
+          { color: "bg-amber-500",    label: "Pending Kill" },
+          { color: "bg-red-500/40 border border-red-500/40", label: "Terminated" },
+        ].map(({ color, label }) => (
+          <div key={label} className="flex items-center gap-2">
+            <div className={`w-2.5 h-2.5 rounded-full ${color}`} />
+            <span className="text-[10px] text-slate-500 font-medium">{label}</span>
+          </div>
+        ))}
+        <div className="ml-auto text-[10px] text-slate-700 font-mono">Click a node to inspect</div>
+      </div>
+
+      {/* Diagnostic table */}
+      <div className="border-t border-white/5">
+        <div className="px-6 py-3 flex items-center justify-between bg-slate-900/40 border-b border-white/5">
+          <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em]">Live Diagnostic Feed</h3>
+          <span className="text-[10px] font-mono text-slate-700">{Object.keys(graphData.nodes_info || {}).length} nodes tracked</span>
+        </div>
+        <div className="max-h-[320px] overflow-y-auto custom-scrollbar">
+          <table className="w-full text-left border-collapse">
+            <thead className="sticky top-0 bg-slate-900/95 backdrop-blur-md text-[9px] text-slate-600 uppercase font-black border-b border-white/5">
+              <tr>
+                <th className="px-6 py-3 tracking-widest">Node Endpoint</th>
+                <th className="px-4 py-3 tracking-widest">Round</th>
+                <th className="px-4 py-3 tracking-widest">Peers</th>
+                <th className="px-4 py-3 tracking-widest">Data</th>
+                <th className="px-4 py-3 tracking-widest">Health</th>
+                <th className="px-4 py-3 tracking-widest">Convergence</th>
+                <th className="px-4 py-3 tracking-widest text-right pr-6">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-white/[0.04]">
