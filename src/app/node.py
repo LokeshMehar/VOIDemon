@@ -350,3 +350,19 @@ def get_new_data():
 
     def send_to_node(self, n, new_time_key):
         """Push-pull gossip exchange with peer node n."""
+    memory_usage = node.node_process.memory_percent()
+    
+    # Get current metric values
+    current_metrics = {
+        "cpu": cpu_usage,
+        "memory": memory_usage,
+        "network": bandwidth_mbps,
+        "storage": storage_percent
+    }
+
+    # Apply VoI priority + delta filtering
+    metrics_to_send = {}
+    metrics_filtered = {}
+
+    for metric, value in current_metrics.items():
+        if should_send_metric(node, metric, value):
