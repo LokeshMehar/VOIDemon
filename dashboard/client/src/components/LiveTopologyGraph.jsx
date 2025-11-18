@@ -236,3 +236,37 @@ export function LiveTopologyGraph({ graphData, onSelectNode, killedNodes, pendin
                               ? "text-red-400 bg-red-500/10 border border-red-500/20"
                               : "text-amber-400 bg-amber-500/10 border border-amber-500/20 animate-pulse"
                           }`}>
+                            {node.strikes >= 3 ? "DEAD" : `${node.strikes}/3 ⚠`}
+                          </span>
+                        ) : (
+                          <span className="text-[9px] font-mono font-black text-emerald-500/70">HEALTHY</span>
+                        )}
+                      </td>
+                      <td className="px-4 py-3.5">
+                        <div className="flex items-center gap-2.5">
+                          <div className="w-14 h-1 bg-slate-800 rounded-full overflow-hidden">
+                            <div
+                              className={`h-full rounded-full transition-all duration-500 ${isConverged ? "bg-emerald-500" : "bg-indigo-500"}`}
+                              style={{ width: `${Math.min(100, (node.ic / activeNodeCount) * 100)}%` }}
+                            />
+                          </div>
+                          <span className="text-[10px] text-slate-600 font-mono">{node.ic}/{activeNodeCount}</span>
+                        </div>
+                      </td>
+                      <td className="px-4 py-3.5 text-right pr-6" onClick={e => e.stopPropagation()}>
+                        <button
+                          onClick={() => onKillNode(node.id)}
+                          disabled={isKilled || isPending}
+                          className={`px-3 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all duration-200 ${
+                            isKilled
+                              ? "bg-red-500/5 text-red-900 border border-red-900/10 cursor-default"
+                              : isPending
+                                ? "bg-amber-500/10 text-amber-500/60 border border-amber-500/20 cursor-wait"
+                                : "bg-red-500/8 text-red-500 border border-red-500/15 hover:bg-red-500/20 hover:text-red-300 hover:border-red-500/40 active:scale-95"
+                          }`}
+                        >
+                          {isKilled ? "Dead" : isPending ? "Killing..." : "Kill"}
+                        </button>
+                      </td>
+                    </tr>
+                  );

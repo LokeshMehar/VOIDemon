@@ -382,3 +382,19 @@ def get_new_data():
             if response.status_code >= 400:
                 self.update_failure_data(new_time_key, n)
             else:
+                self.reset_failure_data(new_time_key, n["ip"] + ':' + n["port"])
+        except Exception as e:
+            logging.error("Error while sending message to node {}: {}".format(n, e))
+            self.update_failure_data(new_time_key, n)
+
+    def update_failure_data(self, new_time_key, n):
+        """Record a failed contact attempt against peer n (heartbeat / 3-strike)."""
+        peer_key = n["ip"] + ':' + n["port"]
+        own_key = self.ip + ':' + self.port
+        hb_state = self.data[new_time_key].setdefault(peer_key, {}).setdefault("hbState", {})
+        
+        # Guard: only add own_key to failureList if not already there
+        failure_list = hb_state.setdefault("failureList", [])
+        if own_key not in failure_list:
+            failure_list.append(own_key)
+            
