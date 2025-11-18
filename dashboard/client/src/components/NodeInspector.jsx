@@ -157,3 +157,29 @@ export function NodeInspector({ nodeId, nodesInfo, onClose, killedNodes }) {
       <div className="px-5 pt-6 pb-5 border-b border-white/5 flex items-start justify-between gap-3">
         <div className="flex-1 min-w-0">
           {/* Breadcrumb */}
+          <div className="flex items-center gap-2 mb-3">
+            <div className={`w-1.5 h-1.5 rounded-full ${statusStyle.dot}`} />
+            <p className="text-[9px] font-black text-slate-600 uppercase tracking-[0.3em]">
+              {isKilled ? "Chaos Log" : "Node Inspector"}
+            </p>
+          </div>
+
+          {/* Node ID */}
+          <p className="text-base font-mono font-bold text-white break-all leading-snug">{nodeId}</p>
+
+          {/* Status + savings */}
+          <div className="flex flex-wrap items-center gap-2 mt-3">
+            <span className={`inline-flex items-center gap-1.5 text-[9px] font-black px-2.5 py-1 rounded-lg border uppercase tracking-wider ${statusStyle.text} ${statusStyle.bg} ${statusStyle.border}`}>
+              {statusLabel}
+            </span>
+            <div className="flex items-center gap-1.5 bg-emerald-500/8 px-2.5 py-1 rounded-lg border border-emerald-500/15">
+              <svg className="w-2.5 h-2.5 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+              </svg>
+              <span className="text-[9px] font-mono font-black text-emerald-400">{nodeSavings.toFixed(0)}% saved</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Close button */}
+        <button
