@@ -202,3 +202,37 @@ export function LiveTopologyGraph({ graphData, onSelectNode, killedNodes, pendin
               </tr>
             </thead>
             <tbody className="divide-y divide-white/[0.04]">
+              {Object.values(graphData.nodes_info || {})
+                .sort((a, b) => b.lastSeen - a.lastSeen)
+                .map(node => {
+                  const isKilled       = killedNodes.has(node.id);
+                  const activeNodeCount = node.active_target || Math.max((node.node_count || 1) - killedNodes.size, 1);
+                  const isConverged    = node.ic >= activeNodeCount && node.ic > 0;
+                  const isPending      = pendingKills?.has(node.id);
+
+                  return (
+                    <tr
+                      key={node.id}
+                      className={`group transition-all duration-150 cursor-pointer ${
+                        isKilled ? "opacity-40" : "hover:bg-white/[0.025]"
+                      } ${selectedNodeId === node.id ? "bg-indigo-500/5" : ""}`}
+                      onClick={() => onSelectNode(node.id)}
+                    >
+                      <td className="px-6 py-3.5 whitespace-nowrap">
+                        <div className="flex items-center gap-2.5">
+                          <div className={`w-2 h-2 rounded-full shrink-0 ${
+                            isKilled ? "bg-red-500/60" : isConverged ? "bg-emerald-500" : isPending ? "bg-amber-500 animate-pulse" : "bg-indigo-500 animate-pulse"
+                          }`} />
+                          <span className="text-slate-300 font-mono text-[11px] group-hover:text-white transition-colors">{node.id}</span>
+                        </div>
+                      </td>
+                      <td className="px-4 py-3.5 font-mono text-[11px] text-slate-500">{node.round ?? 0}</td>
+                      <td className="px-4 py-3.5 font-mono text-[11px] text-slate-500">{node.nd ?? 0}</td>
+                      <td className="px-4 py-3.5 font-mono text-[11px] text-slate-500">{((node.bytes_of_data || 0) / 1024).toFixed(1)} KB</td>
+                      <td className="px-4 py-3.5">
+                        {(node.strikes || 0) > 0 ? (
+                          <span className={`text-[9px] font-mono font-black px-2 py-0.5 rounded-md ${
+                            node.strikes >= 3
+                              ? "text-red-400 bg-red-500/10 border border-red-500/20"
+                              : "text-amber-400 bg-amber-500/10 border border-amber-500/20 animate-pulse"
+                          }`}>

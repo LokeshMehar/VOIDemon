@@ -366,3 +366,19 @@ def get_new_data():
 
     for metric, value in current_metrics.items():
         if should_send_metric(node, metric, value):
+        data = self.prepare_metadata_and_own_fresh_data(new_time_key)
+        try:
+            r_metadata_and_updated = self.gossip_session.post(
+                'http://' + n["ip"] + ':' + '5000' + '/receive_metadata',
+                json=data, timeout=5)
+
+            requested_keys = r_metadata_and_updated.json()['requested_keys']
+            requested_data = self.prepare_requested_data(new_time_key, requested_keys)
+            response = self.gossip_session.get(
+                'http://' + n["ip"] + ':' + '5000' + '/receive_message?inc_round={}'.format(self.cycle),
+                json=requested_data, timeout=5)
+            
+            self.update_own_data(r_metadata_and_updated.json()['updates'], new_time_key)
+            if response.status_code >= 400:
+                self.update_failure_data(new_time_key, n)
+            else:
