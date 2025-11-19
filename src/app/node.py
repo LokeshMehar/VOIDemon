@@ -398,3 +398,19 @@ def get_new_data():
         if own_key not in failure_list:
             failure_list.append(own_key)
             
+            metrics_to_send[metric] = value
+        else:
+            metrics_filtered[metric] = value
+
+    # Build appState — omitted metrics stay as "not_updated"
+    app_state = {}
+    for metric in metrics_to_send:
+        app_state[metric] = str(metrics_to_send[metric])
+
+    # Round-level statistics
+    node.data_flow_per_round.setdefault(node.cycle, {})
+    node.data_flow_per_round[node.cycle]['metrics_sent'] = len(metrics_to_send)
+    node.data_flow_per_round[node.cycle]['metrics_filtered'] = len(metrics_filtered)
+
+    metric_flags = {metric: (metric in metrics_to_send) for metric in current_metrics}
+

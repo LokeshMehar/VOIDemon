@@ -563,3 +563,21 @@ from flask import Flask, request
 from joblib import Parallel, delayed
 import database as db
 from sqlite3 import Connection
+        "node_list": run.node_list,
+        "target_count": run.target_count,
+        "gossip_rate": run.gossip_rate,
+        "database_address": database_address,
+        "monitoring_address": monitoring_address,
+        "node_ip": run.node_list[index]["ip"],
+        "is_send_data_back": experiment.is_send_data_back,
+        "push_mode": experiment.push_mode,
+        "client_port": parser.get('VOIDemonParam', 'client_port')
+    }
+    try:
+        time.sleep(0.01)
+        session.post("http://{}:{}/start_node".format(ip, run.node_list[index]["port"]), json=to_send)
+    except Exception as e:
+        print(f"Node {index} not started: {e}. Retrying...")
+        time.sleep(0.5)
+        start_node(index, run, database_address, monitoring_address, ip, retries + 1)
+
