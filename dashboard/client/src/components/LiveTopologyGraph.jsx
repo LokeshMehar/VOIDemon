@@ -270,3 +270,16 @@ export function LiveTopologyGraph({ graphData, onSelectNode, killedNodes, pendin
                       </td>
                     </tr>
                   );
+                })}
+            </tbody>
+          </table>
+          {Object.keys(graphData.nodes_info || {}).length === 0 && (
+            <div className="py-12 flex items-center justify-center">
+              <p className="text-slate-700 font-mono text-xs">No nodes detected yet</p>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
