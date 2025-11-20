@@ -313,3 +313,16 @@ export default function App() {
           onClose={() => setSelectedNodeId(null)}
           killedNodes={killedNodes}
         />
+      )}
+
+      {/* ── Toast notifications ───────────────────────────────────────────────── */}
+      {toast && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          onDismiss={() => setToast(null)}
+        />
+      )}
+    </div>
+  );
+}

@@ -286,3 +286,36 @@
 
   <!-- ═══════════════════════════════════════════════════════════════ -->
   <!-- LAYER 2: NODE.JS API GATEWAY                                  -->
+  <!-- ═══════════════════════════════════════════════════════════════ -->
+  <rect x="40" y="260" width="1120" height="115" rx="12" fill="url(#nodeGrad)" stroke="#22c55e" stroke-width="1.5" stroke-opacity="0.5"/>
+  <rect x="55" y="268" width="140" height="22" rx="4" fill="#22c55e" fill-opacity="0.2"/>
+  <text x="65" y="284" fill="#4ade80" font-size="12" font-weight="600">🟢 API LAYER</text>
+
+  <!-- Express server -->
+  <rect x="70" y="300" width="280" height="60" rx="8" fill="#1e1e2e" stroke="#22c55e" stroke-width="1"/>
+  <text x="210" y="322" text-anchor="middle" fill="#4ade80" font-size="13" font-weight="700">Express + Socket.IO Server</text>
+  <text x="210" y="340" text-anchor="middle" fill="#94a3b8" font-size="10">Node.js API Gateway — Port :5000</text>
+  <text x="210" y="355" text-anchor="middle" fill="#64748b" font-size="9">server.js</text>
+
+  <!-- API routes -->
+  <rect x="380" y="300" width="230" height="60" rx="8" fill="#1e1e2e" stroke="#334155" stroke-width="1"/>
+  <text x="395" y="318" fill="#94a3b8" font-size="10" font-weight="600">REST Endpoints:</text>
+  <text x="395" y="334" fill="#475569" font-size="9">GET/POST /api/config    → INI R/W</text>
+  <text x="395" y="348" fill="#475569" font-size="9">POST     /api/start     → Orch Proxy</text>
+  <text x="395" y="362" fill="#475569" font-size="9">POST     /api/kill-node → Chaos</text>
+
+  <!-- Socket events -->
+  <rect x="640" y="300" width="240" height="60" rx="8" fill="#1e1e2e" stroke="#334155" stroke-width="1"/>
+  <text x="655" y="318" fill="#94a3b8" font-size="10" font-weight="600">WebSocket Events:</text>
+  <text x="655" y="334" fill="#475569" font-size="9">▶ run_started     (topology list)</text>
+  <text x="655" y="348" fill="#475569" font-size="9">▶ new_metric      (live state push)</text>
+  <text x="655" y="362" fill="#475569" font-size="9">▶ node_killed     (chaos feedback)</text>
+
+  <!-- Config.ini box -->
+  <rect x="910" y="300" width="230" height="60" rx="8" fill="#1e1e2e" stroke="#f97316" stroke-width="1"/>
+  <text x="1025" y="322" text-anchor="middle" fill="#fb923c" font-size="13" font-weight="700">📄 config.ini</text>
+  <text x="1025" y="340" text-anchor="middle" fill="#94a3b8" font-size="10">Simulation Parameters</text>
+  <text x="1025" y="355" text-anchor="middle" fill="#64748b" font-size="9">nodes, gossip_rate, failure_rate</text>
+
+  <!-- ═══════════════════════════════════════════════════════════════ -->
+  <!-- CONNECTION: API Gateway ↔ Orchestrator                        -->
