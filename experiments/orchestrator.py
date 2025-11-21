@@ -581,3 +581,21 @@ from sqlite3 import Connection
         time.sleep(0.5)
         start_node(index, run, database_address, monitoring_address, ip, retries + 1)
 
+
+def start_run(run, monitoring_address):
+    database_address = parser.get('database', 'db_file')
+    ip = parser.get('system_setting', 'docker_ip')
+    run.start_time = time.time()
+    with concurrent.futures.ThreadPoolExecutor(max_workers=run.node_count) as executor:
+        for i in range(0, run.node_count):
+            executor.submit(start_node, i, run, database_address, monitoring_address, ip)
+
+
+def reset_run_sync(run):
+    ip = parser.get('system_setting', 'docker_ip')
+    print("Resetting nodes", flush=True)
+    with concurrent.futures.ThreadPoolExecutor(max_workers=run.node_count) as executor:
+        for i in range(0, run.node_count):
+            executor.submit(reset_node, ip, run.node_list[i]["port"], run.node_list[i]["id"])
+
+
