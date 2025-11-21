@@ -250,3 +250,28 @@ if __name__ == "__main__":
         if key in node.data[latest_entry] and key in metadata:
             if ('counter' not in node.data[latest_entry][key]) or (
                     float(metadata[key]) > float(node.data[latest_entry][key]['counter'])):
+                ips_to_update.append(key)
+            else:
+                data_to_send[key] = node.data[latest_entry][key]
+        elif key in node.data[latest_entry] and key not in metadata:
+            data_to_send[key] = node.data[latest_entry][key]
+        else:
+            ips_to_update.append(key)
+    return {'requested_keys': ips_to_update, 'updates': data_to_send}
+
+
+@gossip_app.route('/receive_metadata', methods=['POST'])
+def receive_metadata():
+    if not Node.instance().is_alive:
+        return "Dead Node", 500
+    data = compare_node_data_with_metadata(request.get_json())
+    return data
+
+
+@gossip_app.route('/reset_node')
+def reset_node():
+    node = Node.instance()
+    node.is_alive = False
+    node.client_thread.join()
+    node.counter_thread.join()
+    node.set_params(None, None, 0, None, {}, False, 0, 0, None, None,

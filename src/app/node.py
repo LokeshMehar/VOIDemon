@@ -414,3 +414,19 @@ def get_new_data():
 
     metric_flags = {metric: (metric in metrics_to_send) for metric in current_metrics}
 
+        # Always increment failureCount on every reported failure
+        f_count = hb_state.get("failureCount", 0) + 1
+        hb_state["failureCount"] = f_count
+        
+        if f_count >= 3:
+            self.delete_node_from_nodelist(peer_key)
+            hb_state["nodeAlive"] = False
+
+    def delete_node_from_nodelist(self, key_to_delete):
+        """Remove a node from the gossip peer list (post 3 strikes)."""
+        self.node_list = [n for n in self.node_list
+                          if n["ip"] + ":" + n["port"] != key_to_delete]
+
+    def reset_failure_data(self, new_time_key, ip_key):
+        """Clear failure state for a peer that responded successfully."""
+        if ip_key in self.data[new_time_key]:
