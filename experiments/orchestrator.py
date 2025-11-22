@@ -635,3 +635,21 @@ def check_if_all_nodes_are_reset(run):
 def stop_node_percentage(run, percent):
     print("Stopping {}% of nodes".format(percent * 100))
     if percent == 0:
+        return
+    nodes_to_stop_count = int(len(run.node_list) * percent)
+    indices = list(range(len(run.node_list)))
+    random_indices_to_stop = random.sample(indices, nodes_to_stop_count)
+    for i in random_indices_to_stop:
+        try:
+            container_to_stop = docker_client.containers.get(run.node_list[i]["id"])
+            container_to_stop.stop()
+            run.node_list[i]["is_alive"] = False
+            run.stopped_nodes[i] = run.node_list[i]
+        except Exception as e:
+            print("Error stopping container: {}".format(e))
+    print("{}% of nodes (n={}) are stopped".format(percent * 100, nodes_to_stop_count))
+
+
+def run_converged(run):
+    if run.is_converged:
+        return

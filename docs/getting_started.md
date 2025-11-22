@@ -76,3 +76,37 @@ python experiments/orchestrator.py
 *The orchestrator will boot up on port 4000 and wait for the start signal.*
 
 ### Step 3.3: Start the API Gateway
+Open a second terminal:
+```bash
+cd dashboard/api
+npm start
+```
+*The Express server will boot on port 5000 and connect WebSockets.*
+
+### Step 3.4: Start the Dashboard
+Open a third terminal:
+```bash
+cd dashboard/client
+npm run dev
+```
+*Vite will compile the React app and open it at `http://localhost:5173`.*
+
+---
+
+## 4. Execution & Interaction
+
+1. Open your browser to `http://localhost:5173`.
+2. Review the live cluster configuration on the screen.
+3. Click the purple **"BOOT DISTRIBUTED NETWORK"** button.
+
+### What Happens Next?
+- The Orchestrator will instantly spawn `N` Docker containers (based on your `node_range` config).
+- The dashboard's force-graph will populate with the node representations.
+- As the containers boot and begin their stochastic gossip protocol, you will see the links connecting on the graph.
+- The metrics at the top of the screen (VoI Efficiency, Gossip Rounds, Data Transferred) will stream live via WebSockets.
+
+### Testing Fault Tolerance (Chaos Engine)
+To test the Leaderless Quorum Consensus (LQC) failure detection:
+- Scroll down to the **Live Diagnostic Feed** table.
+- Click the red **KILL** button next to any node.
+- Watch the graph: The node will instantly be terminated. Within a few gossip rounds, the surviving nodes will notice the liveness timestamp is stale, achieve a consensus on the failure, and visually drop the dead node from the cluster topology.
