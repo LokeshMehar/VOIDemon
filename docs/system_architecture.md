@@ -109,3 +109,24 @@ sequenceDiagram
     participant DB as SQLite WAL
     participant Orch as Python Orchestrator
     participant API as Node.js Gateway
+    participant React as React Dashboard
+    
+    DB->>Orch: Batch Write Complete
+    Orch->>API: HTTP POST (Data Stream)
+    API->>React: Socket.IO Emit (new_metric)
+    Note over React: requestAnimationFrame Buffer<br/>Flushes to UI
+```
+
+---
+
+## 4. The Dashboard (`dashboard/client/`)
+
+A React 18 SPA built with Vite and Tailwind CSS.
+
+### 4.1 Force-Directed Topology (`LiveTopologyGraph.jsx`)
+Utilizes `react-force-graph-2d` to render the cluster. As nodes gossip, the links between them light up. When a node is killed via the Chaos Engine, the graph visually severs the connections and marks the node red as the 3-strike failure detection propagates through the network.
+
+### 4.2 RAF State Batching (`useGossipSocket.js`)
+If 50 nodes are gossiping rapidly, they can generate hundreds of state updates per second. Pushing every update directly to React state would cause catastrophic layout thrashing and crash the browser. 
+
+VOIDemon implements a `requestAnimationFrame` (RAF) buffer. Incoming Socket.IO messages are dumped into a mutable JavaScript object. On every browser animation frame (60fps), React flushes the buffer into state exactly once. This guarantees buttery-smooth UI performance regardless of the network simulation size.

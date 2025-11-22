@@ -617,3 +617,21 @@ def prepare_run(run):
             payload = {
                 "node_count": run.node_count,
                 "active_target": run.node_count,
+                "nodes": nodes,
+                "timestamp": time.time()
+            }
+            requests.post("http://localhost:5000/api/live-run-start", json=payload, timeout=2)
+        except Exception:
+            pass
+
+    threading.Thread(target=_notify_run_start, daemon=True).start()
+    time.sleep(10)
+
+
+def check_if_all_nodes_are_reset(run):
+    return all(not node["is_alive"] for node in run.node_list)
+
+
+def stop_node_percentage(run, percent):
+    print("Stopping {}% of nodes".format(percent * 100))
+    if percent == 0:
