@@ -599,3 +599,21 @@ def reset_run_sync(run):
             executor.submit(reset_node, ip, run.node_list[i]["port"], run.node_list[i]["id"])
 
 
+def prepare_run(run):
+    spawn_multiple_nodes(run)
+    while not nodes_are_ready(run):
+        time.sleep(1)
+    save_run_to_database(run)
+    print("Run {} started".format(run.db_id), flush=True)
+
+    # Notify the dashboard of the new run and its initial node list
+    def _notify_run_start():
+        try:
+            nodes = [
+                {"ip": node['ip'], "port": node['port']}
+                for node in run.node_list
+                if node and 'ip' in node and 'port' in node
+            ]
+            payload = {
+                "node_count": run.node_count,
+                "active_target": run.node_count,
