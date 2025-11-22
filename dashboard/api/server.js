@@ -69,3 +69,41 @@ io.on("connection", (socket) => {
 });
 
 // ---------------------------------------------------------------------------
+// GET /api/config
+// Read config.ini and return as a nested JSON object
+// ---------------------------------------------------------------------------
+app.get("/api/config", (req, res) => {
+  try {
+    const raw = fs.readFileSync(CONFIG_PATH, "utf-8");
+    const parsed = ini.parse(raw);
+    res.json(parsed);
+  } catch (err) {
+    console.error("[GET /api/config] Error reading config:", err.message);
+    res.status(500).json({ error: "Failed to read config.ini", details: err.message });
+  }
+});
+
+// ---------------------------------------------------------------------------
+// POST /api/config
+// Accept updated config JSON, serialise back to INI, overwrite config.ini
+// ---------------------------------------------------------------------------
+app.post("/api/config", (req, res) => {
+  try {
+    const updated = req.body;
+    if (!updated || typeof updated !== "object") {
+      return res.status(400).json({ error: "Invalid payload: expected a JSON object" });
+    }
+    const iniString = ini.stringify(updated);
+    fs.writeFileSync(CONFIG_PATH, iniString, "utf-8");
+    res.json({ success: true, message: "Configuration saved successfully." });
+  } catch (err) {
+    console.error("[POST /api/config] Error writing config:", err.message);
+    res.status(500).json({ error: "Failed to write config.ini", details: err.message });
+  }
+});
+
+// ---------------------------------------------------------------------------
+// POST /api/start
+// Forward a trigger to the Python orchestrator running on localhost:4000
+// ---------------------------------------------------------------------------
+app.post("/api/start", async (req, res) => {

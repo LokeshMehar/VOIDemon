@@ -430,3 +430,12 @@ def get_new_data():
     def reset_failure_data(self, new_time_key, ip_key):
         """Clear failure state for a peer that responded successfully."""
         if ip_key in self.data[new_time_key]:
+            self.data[new_time_key][ip_key]["hbState"]["failureCount"] = 0
+            self.data[new_time_key][ip_key]["hbState"]["nodeAlive"] = True
+            self.data[new_time_key][ip_key]["hbState"]["failureList"] = []
+        else:
+            self.data[new_time_key].setdefault(ip_key, {}).setdefault("hbState", {})["failureCount"] = 0
+            self.data[new_time_key].setdefault(ip_key, {}).setdefault("hbState", {})["failureList"] = []
+            self.data[new_time_key][ip_key]["hbState"]["nodeAlive"] = True
+
+    # Sessions — Moved to __init__ for instance scope
