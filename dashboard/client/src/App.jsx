@@ -326,3 +326,24 @@ export default function App() {
     </div>
   );
 }
+  // ── Derived values ───────────────────────────────────────────────────────────
+  const globalSavingsPercent = useMemo(() => {
+    if (globalTotalMessages === 0) return 0;
+    return (globalFilteredMessages / globalTotalMessages) * 100;
+  }, [globalTotalMessages, globalFilteredMessages]);
+
+  const activeNodeCount = useMemo(() => {
+    return graphData.nodes.filter(n => !killedNodes.has(n.id)).length;
+  }, [graphData.nodes, killedNodes]);
+
+  const totalRounds = useMemo(() => {
+    const nodes = Object.values(graphData.nodes_info || {});
+    if (nodes.length === 0) return 0;
+    return Math.max(...nodes.map(n => n.round ?? 0));
+  }, [graphData.nodes_info]);
+
+  const totalDataBytes = useMemo(() => {
+    return Object.values(graphData.nodes_info || {}).reduce((acc, n) => acc + (n.bytes_of_data || 0), 0);
+  }, [graphData.nodes_info]);
+
+  // ── Handlers ─────────────────────────────────────────────────────────────────
