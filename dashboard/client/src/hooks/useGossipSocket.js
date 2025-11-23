@@ -261,3 +261,43 @@ export function useGossipSocket() {
       let node = nodesMap.get(senderKey);
       if (!node) {
         node = {
+          id: senderKey, label: senderKey,
+          x: (Math.random() - 0.5) * 50, y: (Math.random() - 0.5) * 50,
+          isDead: false, totalMessages: 0, filteredMessages: 0,
+          appState: {}, strikes: 0,
+        };
+        nodesMap.set(senderKey, node);
+      }
+
+      // ── VoI savings tracking ─────────────────────────────────────────────
+      let isFiltered = false;
+      const fieldStats = {};
+
+      METRICS_FIELDS.forEach(f => {
+        const val = p[f];
+        if (val === "not_updated") {
+          isFiltered = true;
+          // Preserve last known value for display; don't overwrite with sentinel
+          fieldStats[f] = (node.appState?.[f] && node.appState[f] !== "not_updated")
+            ? node.appState[f]
+            : "not_updated";
+        } else if (val !== undefined) {
+          fieldStats[f] = val;
+        }
+      });
+
+      pendingTotalRef.current++;
+      if (isFiltered) pendingFilteredRef.current++;
+
+      // ── Update node in-place (no object spread = no allocation churn) ────
+      node.ic            = p.ic || 0;
+      node.node_count    = p.node_count || 1;
+      node.active_target = p.active_target || p.node_count || 1;
+      node.round         = p.round || 0;
+      node.nd            = p.nd || 0;
+      node.rm            = p.rm || 0;
+      node.bytes_of_data = p.bytes_of_data || 0;
+      node.lastSeen      = now;
+      node.totalMessages++;
+      if (isFiltered) node.filteredMessages++;
+
