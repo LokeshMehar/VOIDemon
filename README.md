@@ -133,3 +133,24 @@ To understand the deep technical implementation and theoretical models backing V
 
 ## 📂 Project Structure
 
+```
+VOIDemon/
+│
+├── .github/                           # GitHub Community Templates
+│   ├── ISSUE_TEMPLATE/
+│   │   ├── bug_report.md              # Bug report issue form
+│   │   └── feature_request.md         # Feature request issue form
+│   └── PULL_REQUEST_TEMPLATE.md       # PR checklist template
+│
+├── src/                               # Core Gossip Engine (Runs in Docker)
+│   ├── app/
+│   │   ├── Dockerfile                 # Container image for a single gossip node
+│   │   ├── gossip_node.py             # Flask entrypoint — VoI logic & HTTP routes
+│   │   ├── node.py                    # Node state machine, peer tracking, failure detection
+│   │   ├── quorum_query.py            # Leaderless Quorum Consensus read implementation
+│   │   ├── digest.py                  # SHA-256 digest helpers for state comparison
+│   │   ├── singleton.py               # Decorator-based process-safe node singleton
+│   │   └── requirements.txt           # Python deps for the Docker container
+│   ├── query_client.py                # Re-export bridge: orchestrator → quorum_query
+│   └── README.md                      # Source module documentation
+│
