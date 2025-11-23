@@ -221,3 +221,43 @@ export function useGossipSocket() {
       linksSetRef.current   = new Set();
       strikesMapRef.current = new Map();
 
+      const newKilledSet = new Set();
+      killedNodesRef.current = newKilledSet;
+      setKilledNodes(newKilledSet);
+      setGlobalTotal(0);
+      setGlobalFiltered(0);
+      pendingTotalRef.current    = 0;
+      pendingFilteredRef.current = 0;
+
+      const now = Date.now();
+      const nodeCount = p.node_count || 1;
+      (p.nodes || []).forEach(n => {
+        const id = `${n.ip}:${n.port}`;
+        nodesMapRef.current.set(id, {
+          id, label: id, ic: 0, node_count: nodeCount, round: 0, nd: 0, rm: 0,
+          bytes_of_data: 0, lastSeen: now,
+          x: (Math.random() - 0.5) * 50, y: (Math.random() - 0.5) * 50,
+          totalMessages: 0, filteredMessages: 0, appState: {}, isDead: false,
+          strikes: 0,
+        });
+      });
+
+      // Immediate flush for run_started (not rate-limited)
+      setGraphData({
+        nodes: Array.from(nodesMapRef.current.values()),
+        links: [],
+        nodes_info: Object.fromEntries(nodesMapRef.current),
+      });
+    });
+
+    // ── new_metric: hot path — mutate refs only, schedule RAF flush ──────────
+    socket.on("new_metric", (p) => {
+      const senderKey = `${p.ip}:${p.port}`;
+      const now = Date.now();
+      const nodesMap   = nodesMapRef.current;
+      const linksSet   = linksSetRef.current;
+      const killedSet  = killedNodesRef.current; // ← ref, not stale closure
+
+      let node = nodesMap.get(senderKey);
+      if (!node) {
+        node = {
