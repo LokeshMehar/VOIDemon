@@ -653,3 +653,21 @@ def stop_node_percentage(run, percent):
 def run_converged(run):
     if run.is_converged:
         return
+    run.convergence_message_count = run.message_count
+    if run.start_time is not None:
+        run.convergence_time = time.time() - run.start_time
+    else:
+        run.convergence_time = 0.0
+    print("Convergence time: {}".format(run.convergence_time))
+    print("Convergence message count: {}".format(run.convergence_message_count))
+    run.is_converged = True
+
+
+def check_convergence(run, data_stored_in_node):
+    """
+    Declare convergence when every alive peer in the gossip snapshot holds
+    a valid counter entry.
+
+    Key insight for chaos testing: when a node is killed, the survivors stop
+    hearing from it and eventually delete it from their node_list via the
+    3-strike failure detector. We honour run.manually_killed_count so the
