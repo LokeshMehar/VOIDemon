@@ -671,3 +671,21 @@ def check_convergence(run, data_stored_in_node):
     Key insight for chaos testing: when a node is killed, the survivors stop
     hearing from it and eventually delete it from their node_list via the
     3-strike failure detector. We honour run.manually_killed_count so the
+    target is immediately lowered when the dashboard kills a node — before the
+    3-strike eviction propagates through the cluster.
+    """
+    if run.is_converged:
+        return True
+
+    alive_peers = {
+        peer for peer, d in data_stored_in_node.items()
+        if d.get("hbState", {}).get("nodeAlive", True)
+    }
+
+    expected_count = run.node_count - run.manually_killed_count
+    if expected_count <= 0:
+        return False
+
+    if len(alive_peers) < expected_count:
+        return False
+
