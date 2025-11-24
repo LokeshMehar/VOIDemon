@@ -689,3 +689,21 @@ def check_convergence(run, data_stored_in_node):
     if len(alive_peers) < expected_count:
         return False
 
+    for peer in alive_peers:
+        peer_data = data_stored_in_node.get(peer, {})
+        if "counter" not in peer_data:
+            return False
+
+    run_converged(run)
+    return True
+
+
+def save_query_in_database(run, i, failure_percent, target_key, time_to_query, total_messages_for_query, success):
+    experiment.voidemon_db.save_query_in_database(
+        run.db_id, run.node_count, i, failure_percent, time_to_query, total_messages_for_query, success
+    )
+
+
+def run_queries(run, query_count, failure_percent):
+    docker_ip = parser.get('system_setting', 'docker_ip')
+    quorum_size = 3

@@ -107,3 +107,41 @@ app.post("/api/config", (req, res) => {
 // Forward a trigger to the Python orchestrator running on localhost:4000
 // ---------------------------------------------------------------------------
 app.post("/api/start", async (req, res) => {
+  try {
+    const orchestratorUrl = "http://localhost:4000/start";
+    const response = await fetch(orchestratorUrl, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(req.body),
+    });
+
+    // Surface the orchestrator's own status code if it signals an error
+    if (!response.ok) {
+      const text = await response.text();
+      return res.status(response.status).json({
+        error: "Orchestrator returned an error",
+        details: text,
+      });
+    }
+
+    // Try to parse JSON; fall back to raw text
+    const contentType = response.headers.get("content-type") || "";
+    const data = contentType.includes("application/json")
+      ? await response.json()
+      : await response.text();
+
+    res.json({ success: true, orchestratorResponse: data });
+  } catch (err) {
+    console.error("[POST /api/start] Error contacting orchestrator:", err.message);
+    res.status(503).json({
+      error: "Could not reach the orchestrator at localhost:4000",
+      details: err.message,
+    });
+  }
+});
+
+// ---------------------------------------------------------------------------
+// POST /api/live-metrics
+// Receives metric payloads from the Python orchestrator and broadcasts them
+// to all connected frontend clients via Socket.io
+// ---------------------------------------------------------------------------
