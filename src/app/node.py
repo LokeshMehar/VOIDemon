@@ -439,3 +439,19 @@ def get_new_data():
             self.data[new_time_key][ip_key]["hbState"]["nodeAlive"] = True
 
     # Sessions — Moved to __init__ for instance scope
+    data = {
+        "counter": "{}".format(node.gossip_counter),
+        "cycle": "{}".format(node.cycle),
+        "digest": "",
+        "nodeState": {
+            "id": "",
+            "ip": "{}".format(node.ip),
+            "port": "{}".format(node.port),
+        },
+        "hbState": {
+            "timestamp": "{}".format(time.time()),
+            "failureCount": node.failure_counter,
+            "failureList": node.failure_list,
+            "nodeAlive": node.is_alive,
+        },
+        "appState": app_state,
