@@ -275,3 +275,28 @@ def reset_node():
     node.client_thread.join()
     node.counter_thread.join()
     node.set_params(None, None, 0, None, {}, False, 0, 0, None, None,
+                    is_send_data_back=None, client_thread=None,
+                    counter_thread=None, data_flow_per_round={},
+                    push_mode=0, client_port=None)
+    return "OK"
+
+
+@gossip_app.route('/stop_node')
+def stop_node():
+    node = Node.instance()
+    node.is_alive = False
+    node.client_thread.join()
+    node.counter_thread.join()
+    return "OK"
+
+
+@gossip_app.route('/terminate', methods=['POST', 'GET'])
+def terminate_node():
+    """
+    Chaos Engine soft-kill endpoint called by the dashboard.
+
+    Instantly sets is_alive=False so this node stops gossiping and returns
+    HTTP 500 to all peers on their next gossip request, triggering the
+    3-strike leaderless quorum failure detector — no Docker stop required.
+    """
+    node = Node.instance()
