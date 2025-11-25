@@ -707,3 +707,21 @@ def save_query_in_database(run, i, failure_percent, target_key, time_to_query, t
 def run_queries(run, query_count, failure_percent):
     docker_ip = parser.get('system_setting', 'docker_ip')
     quorum_size = 3
+    for i in range(0, query_count):
+        alive_nodes = [item for item in run.node_list if item.get("is_alive", False)]
+        if not alive_nodes:
+            print("No alive nodes available for querying")
+            continue
+        target_node = random.choice(alive_nodes)
+        try:
+            start_time = time.time()
+            total_messages_for_query, query_result = query_client.query(
+                alive_nodes, quorum_size, target_node["ip"], target_node["port"], docker_ip
+            )
+            time_to_query = time.time() - start_time
+            success = True
+        except Exception as e:
+            print(f"Query failed: {e}")
+            time_to_query = time.time() - start_time
+            total_messages_for_query = 0
+            success = False

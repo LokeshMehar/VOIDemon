@@ -145,3 +145,41 @@ app.post("/api/start", async (req, res) => {
 // Receives metric payloads from the Python orchestrator and broadcasts them
 // to all connected frontend clients via Socket.io
 // ---------------------------------------------------------------------------
+app.post("/api/live-metrics", (req, res) => {
+  const payload = req.body;
+  io.emit("new_metric", payload);
+  res.json({ received: true });
+});
+
+// ---------------------------------------------------------------------------
+// POST /api/live-run-start
+// Receives the initial node list from the orchestrator and broadcasts it
+// to the frontend to pre-initialize the graph.
+// ---------------------------------------------------------------------------
+app.post("/api/live-run-start", (req, res) => {
+  const payload = req.body;
+  io.emit("run_started", payload);
+  res.json({ success: true });
+});
+
+// ---------------------------------------------------------------------------
+// POST /api/kill-node/:ip/:port
+// Chaos Engine: soft-kill a live node via its Flask /terminate endpoint.
+// This is instant (no Docker daemon overhead), and triggers the in-network
+// 3-strike failure detection so the graph visually disconnects the node.
+// ---------------------------------------------------------------------------
+app.post("/api/kill-node/:ip/:port", async (req, res) => {
+  const targetIp   = req.params.ip;
+  const targetPort = req.params.port;
+
+  if (!/^(\d{1,3}\.){3}\d{1,3}$/.test(targetIp)) {
+    return res.status(400).json({ error: "Invalid IP address format." });
+  }
+
+  const nodeUrl = `http://127.0.0.1:${targetPort}/terminate`;
+  console.log(`[Chaos Engine] Soft-killing ${targetIp}:${targetPort} via ${nodeUrl}`);
+
+  try {
+    // Hit the /terminate endpoint directly inside the container
+    const response = await fetch(nodeUrl, { method: "POST", signal: AbortSignal.timeout(4000) });
+    const body     = await response.text();
