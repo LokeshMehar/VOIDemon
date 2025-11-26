@@ -154,3 +154,24 @@ VOIDemon/
 │   ├── query_client.py                # Re-export bridge: orchestrator → quorum_query
 │   └── README.md                      # Source module documentation
 │
+├── experiments/                       # Simulation Orchestrator & Analytics
+│   ├── orchestrator.py                # Flask orchestrator: boots cluster, streams metrics
+│   ├── analytics.py                   # Post-run analytics: convergence & bandwidth charts
+│   ├── database.py                    # SQLite WAL connection pool & query helpers
+│   ├── inspect_schema.py              # Debug utility: prints DB schema
+│   ├── config.ini                     # Simulation parameters (nodes, gossip rate, etc.)
+│   └── README.md                      # Experiments module documentation
+│
+├── dashboard/                         # Full-Stack Monitoring Dashboard
+│   ├── api/
+│   │   ├── server.js                  # Express + Socket.IO API gateway (port 5000)
+│   │   └── package.json
+│   └── client/
+│       ├── src/
+│       │   ├── App.jsx                # Root orchestrator component
+│       │   ├── main.jsx               # React entry point
+│       │   ├── index.css              # Global styles + animations
+│       │   ├── hooks/
+│       │   │   ├── useGossipSocket.js # Socket.IO lifecycle + RAF-batched state
+│       │   │   └── useConfig.js       # Config fetch/save with INI bridge
+│       │   └── components/
