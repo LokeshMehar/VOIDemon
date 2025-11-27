@@ -725,3 +725,21 @@ def run_queries(run, query_count, failure_percent):
             time_to_query = time.time() - start_time
             total_messages_for_query = 0
             success = False
+        save_query_in_database(run, i, failure_percent, target_node["ip"] + ":" + target_node["port"],
+                               time_to_query, total_messages_for_query, success)
+
+
+def update_during_run(run):
+    while not run.is_converged:
+        time.sleep(0.1)
+    print(parser.get('VOIDemonParam', 'continue_after_convergence'))
+    if parser.get('VOIDemonParam', 'continue_after_convergence') == "1":
+        print("Convergence reached, continuing run")
+        while not run.max_round_is_reached:
+            time.sleep(0.1)
+        print("Max round reached: stopping now")
+    print("Starting query phase")
+    if parser.get('system_setting', 'query_logic') == "1":
+        failure_ratio = float(parser.get('system_setting', 'failure_rate'))
+        stop_node_percentage(run, failure_ratio)
+        time.sleep(20)
