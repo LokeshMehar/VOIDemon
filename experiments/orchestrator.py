@@ -743,3 +743,21 @@ def update_during_run(run):
         failure_ratio = float(parser.get('system_setting', 'failure_rate'))
         stop_node_percentage(run, failure_ratio)
         time.sleep(20)
+        run_queries(run, query_count=100, failure_percent=failure_ratio)
+
+
+# ── In-memory push-data store (NodeStorage) ──────────────────────────────────
+connection_pool = sqlite3.connect("node_storage.db", check_same_thread=False, isolation_level=None)
+with connection_pool:
+    connection_pool.execute(
+        "CREATE TABLE IF NOT EXISTS unique_entries "
+        "(id INTEGER PRIMARY KEY AUTOINCREMENT, key TEXT, value TEXT)"
+    )
+    connection_pool.execute(
+        "CREATE TABLE IF NOT EXISTS data_entries "
+        "(id INTEGER PRIMARY KEY AUTOINCREMENT, node TEXT, round INTEGER, key TEXT, unique_entry_id INTEGER)"
+    )
+
+database_lock = threading.Lock()
+
+

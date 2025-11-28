@@ -175,3 +175,24 @@ VOIDemon/
 │       │   │   ├── useGossipSocket.js # Socket.IO lifecycle + RAF-batched state
 │       │   │   └── useConfig.js       # Config fetch/save with INI bridge
 │       │   └── components/
+│       │       ├── LiveTopologyGraph.jsx  # Force-directed cluster graph
+│       │       ├── NodeInspector.jsx      # Slide-in node diagnostics panel
+│       │       ├── ResourceCard.jsx       # CPU/Memory/Network/Storage cards
+│       │       ├── SectionCard.jsx        # Config section editor
+│       │       ├── Spinner.jsx            # Loading + VoI efficiency badge
+│       │       └── Toast.jsx              # Notification system
+│       ├── index.html
+│       ├── vite.config.js             # Vite dev server + API proxy config
+│       ├── tailwind.config.js
+│       └── package.json
+│
+├── docs/                              # Comprehensive Documentation
+│   ├── architecture.svg               # Full system architecture diagram (SVG)
+│   ├── theory_and_concepts.md         # Gossip protocols, VoI filtering, energy models
+│   ├── system_architecture.md         # 4-layer stack breakdown with diagrams
+│   ├── codingParadigm.md              # 20+ engineering trade-off Q&As
+│   ├── api_reference.md               # REST + WebSocket endpoint documentation
+│   └── getting_started.md             # Setup, configuration, and running guide
+│
+├── docker-compose.yml                 # Builds voidemon-node image + test network
+├── requirements.txt                   # Orchestrator Python dependencies
