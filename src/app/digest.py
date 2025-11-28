@@ -26,3 +26,4 @@ def mk_digest(payload: dict) -> str:
         A 64-character lowercase hex string (SHA-256 digest).
     """
     serialised = json.dumps(payload, sort_keys=True)
+    return hashlib.sha256(serialised.encode('utf-8')).hexdigest()
