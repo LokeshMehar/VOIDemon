@@ -1,3 +1,128 @@
+"""
+gossip_node.py — VOIDemon Gossip Node Entrypoint
+
+Each Docker container runs this Flask server. It exposes the gossip protocol
+HTTP endpoints (push/pull metadata exchange), the VoI-filtered metric API,
+the Chaos Engine /terminate soft-kill route, and lifecycle management routes
+called by the orchestrator at experiment start/reset time.
+"""
+
+import time
+
+from flask import Flask, request
+from node import Node, METRIC_PRIORITIES, METRIC_DELTAS
+import threading
+import logging
+import json
+
+logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
+gossip_app = Flask(__name__)
+
+
+@gossip_app.route('/receive_message', methods=['GET'])
+def receive_message():
+    if not Node.instance().is_alive:
+        return "Dead Node", 500
+    compare_and_update_node_data(request.get_json())
+    return "OK"
+
+
+@gossip_app.route('/metadata', methods=['GET'])
+def get_metadata():
+    if not Node.instance().is_alive:
+        return "Dead Node", 500
+    node = Node.instance()
+    if not node.data:
+        return json.dumps({})
+    latest_entry = max(node.data.keys(), key=int)
+    metadata = {}
+    for key in node.data[latest_entry]:
+        if 'counter' in node.data[latest_entry][key]:
+            metadata[key] = {'counter': node.data[latest_entry][key]['counter'],
+                             'digest': node.data[latest_entry][key]['digest']}
+    return json.dumps(metadata)
+
+
+def compare_node_data_with_metadata(data):
+    """Compare incoming metadata with local state; return keys to request and data to push back."""
+    node = Node.instance()
+    metadata = data['metadata']
+    sender_key = next(key for key in data if key != 'metadata')
+    sender_data = data[sender_key]
+    if len(node.data) == 0:
+        # Node doesn't store any data yet — request everything
+        return metadata.keys()
+    latest_entry = max(node.data.keys(), key=int)
+    all_keys = set().union(node.data[latest_entry].keys(), metadata.keys())
+    all_keys.discard(sender_key)
+    node.data_flow_per_round.setdefault(node.cycle, {})
+    if sender_key in node.data[latest_entry]:
+        node.data_flow_per_round[node.cycle].setdefault('fd', 0)
+        node.data_flow_per_round[node.cycle]['fd'] += 1
+    else:
+        node.data_flow_per_round[node.cycle].setdefault('nd', 0)
+        node.data_flow_per_round[node.cycle].setdefault('fd', 0)
+        node.data_flow_per_round[node.cycle]['nd'] += 1
+        node.data_flow_per_round[node.cycle]['fd'] += 1
+
+    node.data[latest_entry][sender_key] = sender_data
+
+    ips_to_update = []
+    data_to_send = {}
+    for key in all_keys:
+        if key in node.data[latest_entry] and key in metadata:
+            if ('counter' not in node.data[latest_entry][key]) or (
+                    float(metadata[key]) > float(node.data[latest_entry][key]['counter'])):
+                ips_to_update.append(key)
+            else:
+                data_to_send[key] = node.data[latest_entry][key]
+        elif key in node.data[latest_entry] and key not in metadata:
+            data_to_send[key] = node.data[latest_entry][key]
+        else:
+            ips_to_update.append(key)
+    return {'requested_keys': ips_to_update, 'updates': data_to_send}
+
+
+@gossip_app.route('/receive_metadata', methods=['POST'])
+def receive_metadata():
+    if not Node.instance().is_alive:
+        return "Dead Node", 500
+    data = compare_node_data_with_metadata(request.get_json())
+    return data
+
+
+@gossip_app.route('/reset_node')
+def reset_node():
+    node = Node.instance()
+    node.is_alive = False
+    node.client_thread.join()
+    node.counter_thread.join()
+    node.set_params(None, None, 0, None, {}, False, 0, 0, None, None,
+                    is_send_data_back=None, client_thread=None,
+                    counter_thread=None, data_flow_per_round={},
+                    push_mode=0, client_port=None)
+    return "OK"
+
+
+@gossip_app.route('/stop_node')
+def stop_node():
+    node = Node.instance()
+    node.is_alive = False
+    node.client_thread.join()
+    node.counter_thread.join()
+    return "OK"
+
+
+@gossip_app.route('/terminate', methods=['POST', 'GET'])
+def terminate_node():
+    """
+    Chaos Engine soft-kill endpoint called by the dashboard.
+
+    Instantly sets is_alive=False so this node stops gossiping and returns
+    HTTP 500 to all peers on their next gossip request, triggering the
+    3-strike leaderless quorum failure detector — no Docker stop required.
+    """
+    node = Node.instance()
     node.is_alive = False
     return "TERMINATED"
 
@@ -73,31 +198,6 @@ def compare_and_update_node_data(incoming_data):
             json=to_send
         )
 
-"""
-gossip_node.py — VOIDemon Gossip Node Entrypoint
-
-Each Docker container runs this Flask server. It exposes the gossip protocol
-HTTP endpoints (push/pull metadata exchange), the VoI-filtered metric API,
-the Chaos Engine /terminate soft-kill route, and lifecycle management routes
-called by the orchestrator at experiment start/reset time.
-"""
-
-import time
-
-from flask import Flask, request
-from node import Node, METRIC_PRIORITIES, METRIC_DELTAS
-import threading
-import logging
-import json
-
-logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
-gossip_app = Flask(__name__)
-
-
-@gossip_app.route('/receive_message', methods=['GET'])
-def receive_message():
-    if not Node.instance().is_alive:
-        return "Dead Node", 500
 
 @gossip_app.route('/start_node', methods=['POST'])
 def start_node():
@@ -123,31 +223,6 @@ def start_node():
                     client_thread=client_thread, counter_thread=counter_thread, data_flow_per_round={},
                     push_mode=push_mode, client_port=client_port)
     client_thread.start()
-    compare_and_update_node_data(request.get_json())
-    return "OK"
-
-
-@gossip_app.route('/metadata', methods=['GET'])
-def get_metadata():
-    if not Node.instance().is_alive:
-        return "Dead Node", 500
-    node = Node.instance()
-    if not node.data:
-        return json.dumps({})
-    latest_entry = max(node.data.keys(), key=int)
-    metadata = {}
-    for key in node.data[latest_entry]:
-        if 'counter' in node.data[latest_entry][key]:
-            metadata[key] = {'counter': node.data[latest_entry][key]['counter'],
-                             'digest': node.data[latest_entry][key]['digest']}
-    return json.dumps(metadata)
-
-
-def compare_node_data_with_metadata(data):
-    """Compare incoming metadata with local state; return keys to request and data to push back."""
-    node = Node.instance()
-    metadata = data['metadata']
-    sender_key = next(key for key in data if key != 'metadata')
     counter_thread.start()
 
     # Apply VoI priority/delta configuration sent by the orchestrator
@@ -225,78 +300,3 @@ def get_metrics_priority_stats():
 
 if __name__ == "__main__":
     gossip_app.run(host='0.0.0.0', debug=True, threaded=True)
-    sender_data = data[sender_key]
-    if len(node.data) == 0:
-        # Node doesn't store any data yet — request everything
-        return metadata.keys()
-    latest_entry = max(node.data.keys(), key=int)
-    all_keys = set().union(node.data[latest_entry].keys(), metadata.keys())
-    all_keys.discard(sender_key)
-    node.data_flow_per_round.setdefault(node.cycle, {})
-    if sender_key in node.data[latest_entry]:
-        node.data_flow_per_round[node.cycle].setdefault('fd', 0)
-        node.data_flow_per_round[node.cycle]['fd'] += 1
-    else:
-        node.data_flow_per_round[node.cycle].setdefault('nd', 0)
-        node.data_flow_per_round[node.cycle].setdefault('fd', 0)
-        node.data_flow_per_round[node.cycle]['nd'] += 1
-        node.data_flow_per_round[node.cycle]['fd'] += 1
-
-    node.data[latest_entry][sender_key] = sender_data
-
-    ips_to_update = []
-    data_to_send = {}
-    for key in all_keys:
-        if key in node.data[latest_entry] and key in metadata:
-            if ('counter' not in node.data[latest_entry][key]) or (
-                    float(metadata[key]) > float(node.data[latest_entry][key]['counter'])):
-                ips_to_update.append(key)
-            else:
-                data_to_send[key] = node.data[latest_entry][key]
-        elif key in node.data[latest_entry] and key not in metadata:
-            data_to_send[key] = node.data[latest_entry][key]
-        else:
-            ips_to_update.append(key)
-    return {'requested_keys': ips_to_update, 'updates': data_to_send}
-
-
-@gossip_app.route('/receive_metadata', methods=['POST'])
-def receive_metadata():
-    if not Node.instance().is_alive:
-        return "Dead Node", 500
-    data = compare_node_data_with_metadata(request.get_json())
-    return data
-
-
-@gossip_app.route('/reset_node')
-def reset_node():
-    node = Node.instance()
-    node.is_alive = False
-    node.client_thread.join()
-    node.counter_thread.join()
-    node.set_params(None, None, 0, None, {}, False, 0, 0, None, None,
-                    is_send_data_back=None, client_thread=None,
-                    counter_thread=None, data_flow_per_round={},
-                    push_mode=0, client_port=None)
-    return "OK"
-
-
-@gossip_app.route('/stop_node')
-def stop_node():
-    node = Node.instance()
-    node.is_alive = False
-    node.client_thread.join()
-    node.counter_thread.join()
-    return "OK"
-
-
-@gossip_app.route('/terminate', methods=['POST', 'GET'])
-def terminate_node():
-    """
-    Chaos Engine soft-kill endpoint called by the dashboard.
-
-    Instantly sets is_alive=False so this node stops gossiping and returns
-    HTTP 500 to all peers on their next gossip request, triggering the
-    3-strike leaderless quorum failure detector — no Docker stop required.
-    """
-    node = Node.instance()

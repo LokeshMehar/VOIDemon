@@ -1,3 +1,71 @@
+"""
+database.py — VOIDemon SQLite Database Layer
+
+Provides two database classes:
+  - VoidemonDB: Stores experiment run data, per-round flow metrics, VoI
+    metric transmission statistics, and query results. Uses WAL mode for
+    high-throughput concurrent writes from the gossip cluster.
+  - NodeDB: Manages the node state snapshot store (unique_entries + data_entries).
+
+All schema creation happens in __init__ so the database is self-bootstrapping.
+"""
+
+import os
+import sqlite3
+import configparser
+
+
+parser = configparser.ConfigParser()
+parser.read(os.path.join(os.path.dirname(__file__), 'config.ini'))
+
+DB_FILE = parser.get('database', 'db_file', fallback='voidemon.db')
+
+
+def get_connection():
+    """Open a WAL-mode SQLite connection to the main experiment database."""
+    conn = sqlite3.connect(
+        os.path.join(os.path.dirname(__file__), DB_FILE),
+        check_same_thread=False
+    )
+    conn.execute("PRAGMA journal_mode = WAL;")
+    conn.execute("PRAGMA synchronous = NORMAL;")
+    return conn
+
+
+def insert_into_round_of_node(run_id, ip, port, this_round, nd, fd, rm, ic, bytes_of_data):
+    """Upsert a single round-of-node record (delete + insert for idempotency)."""
+    try:
+        connection = get_connection()
+        cursor = connection.cursor()
+        cursor.execute(
+            "DELETE FROM round_of_node WHERE run_id = ? AND ip = ? AND port = ? AND round = ?",
+            (run_id, ip, port, this_round)
+        )
+        cursor.execute(
+            "INSERT INTO round_of_node "
+            "(run_id, ip, port, round, nd, fd, rm, ic, bytes_of_data) "
+            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            (run_id, ip, port, this_round, nd, fd, rm, ic, bytes_of_data)
+        )
+        connection.commit()
+        connection.close()
+        return True
+    except Exception as e:
+        print("Error DB insert round_of_node: {}".format(e))
+        return False
+
+
+def insert_into_round_of_node_max_round(run_id, ip, port, this_round, nd, fd, rm, ic, bytes_of_data):
+    """Upsert a round_of_node_max_round record."""
+    try:
+        connection = get_connection()
+        cursor = connection.cursor()
+        cursor.execute(
+            "DELETE FROM round_of_node_max_round WHERE run_id = ? AND ip = ? AND port = ? AND round = ?",
+            (run_id, ip, port, this_round)
+        )
+        cursor.execute(
+            "INSERT INTO round_of_node_max_round "
             "(run_id, ip, port, round, nd, fd, rm, ic, bytes_of_data) "
             "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
             (run_id, ip, port, this_round, nd, fd, rm, ic, bytes_of_data)
@@ -66,23 +134,6 @@ class VoidemonDB:
             "id INTEGER PRIMARY KEY AUTOINCREMENT, "
             "timestamp DATETIME DEFAULT CURRENT_TIMESTAMP)"
         )
-"""
-database.py — VOIDemon SQLite Database Layer
-
-Provides two database classes:
-  - VoidemonDB: Stores experiment run data, per-round flow metrics, VoI
-    metric transmission statistics, and query results. Uses WAL mode for
-    high-throughput concurrent writes from the gossip cluster.
-  - NodeDB: Manages the node state snapshot store (unique_entries + data_entries).
-
-All schema creation happens in __init__ so the database is self-bootstrapping.
-"""
-
-import os
-import sqlite3
-import configparser
-
-
         self.cursor.execute(
             "CREATE TABLE IF NOT EXISTS run ("
             "id INTEGER PRIMARY KEY AUTOINCREMENT, "
@@ -202,23 +253,6 @@ import configparser
                 (run_id, node_count, i, failure_percent, time_to_query, total_messages_for_query, success)
             )
             connection.commit()
-parser = configparser.ConfigParser()
-parser.read(os.path.join(os.path.dirname(__file__), 'config.ini'))
-
-DB_FILE = parser.get('database', 'db_file', fallback='voidemon.db')
-
-
-def get_connection():
-    """Open a WAL-mode SQLite connection to the main experiment database."""
-    conn = sqlite3.connect(
-        os.path.join(os.path.dirname(__file__), DB_FILE),
-        check_same_thread=False
-    )
-    conn.execute("PRAGMA journal_mode = WAL;")
-    conn.execute("PRAGMA synchronous = NORMAL;")
-    return conn
-
-
             connection.close()
             return True
         except Exception as e:
@@ -243,37 +277,3 @@ def get_connection():
         except Exception as e:
             print("Error DB update converged run: {}".format(e))
             return -1
-def insert_into_round_of_node(run_id, ip, port, this_round, nd, fd, rm, ic, bytes_of_data):
-    """Upsert a single round-of-node record (delete + insert for idempotency)."""
-    try:
-        connection = get_connection()
-        cursor = connection.cursor()
-        cursor.execute(
-            "DELETE FROM round_of_node WHERE run_id = ? AND ip = ? AND port = ? AND round = ?",
-            (run_id, ip, port, this_round)
-        )
-        cursor.execute(
-            "INSERT INTO round_of_node "
-            "(run_id, ip, port, round, nd, fd, rm, ic, bytes_of_data) "
-            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
-            (run_id, ip, port, this_round, nd, fd, rm, ic, bytes_of_data)
-        )
-        connection.commit()
-        connection.close()
-        return True
-    except Exception as e:
-        print("Error DB insert round_of_node: {}".format(e))
-        return False
-
-
-def insert_into_round_of_node_max_round(run_id, ip, port, this_round, nd, fd, rm, ic, bytes_of_data):
-    """Upsert a round_of_node_max_round record."""
-    try:
-        connection = get_connection()
-        cursor = connection.cursor()
-        cursor.execute(
-            "DELETE FROM round_of_node_max_round WHERE run_id = ? AND ip = ? AND port = ? AND round = ?",
-            (run_id, ip, port, this_round)
-        )
-        cursor.execute(
-            "INSERT INTO round_of_node_max_round "

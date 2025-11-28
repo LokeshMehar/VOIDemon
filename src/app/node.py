@@ -14,6 +14,102 @@ PRIORITY_MEDIUM = 5   # Update every 5 rounds
 PRIORITY_LOW = 10     # Update every 10 rounds
 
 # Configure priorities for different metrics
+METRIC_PRIORITIES = {
+    "cpu": PRIORITY_HIGH,      # CPU is critical - update every round
+    "memory": PRIORITY_MEDIUM, # Memory - update every 5 rounds
+    "network": PRIORITY_MEDIUM, # Network - update every 5 rounds
+    "storage": PRIORITY_LOW    # Storage changes slowly - update every 10 rounds
+}
+
+# Delta thresholds for each metric (minimum change to trigger update)
+METRIC_DELTAS = {
+    "cpu": 5.0,      # 5% change in CPU
+    "memory": 7.0,   # 7% change in memory
+    "network": 15.0, # 15% change in network
+    "storage": 10.0  # 10% change in storage
+}
+
+
+
+def get_new_data():
+    node = Node.instance()
+    
+    # Calculate Bandwidth (Mbps)
+    current_network_bytes = psutil.net_io_counters().bytes_recv + psutil.net_io_counters().bytes_sent
+    current_time = time.time()
+    
+    if node.last_network_bytes == 0:
+        # First call, initialize values and return 0
+        node.last_network_bytes = current_network_bytes
+        node.last_network_time = current_time
+        bandwidth_mbps = 0.0
+    else:
+        delta_bytes = current_network_bytes - node.last_network_bytes
+        delta_time = current_time - node.last_network_time
+        
+        # Avoid division by zero
+        if delta_time > 0:
+            bandwidth_mbps = (delta_bytes * 8) / (delta_time * 1024 * 1024)
+        else:
+            bandwidth_mbps = 0.0
+            
+        node.last_network_bytes = current_network_bytes
+        node.last_network_time = current_time
+    
+    # Calculate Storage (Usage %)
+    storage_percent = psutil.disk_usage('/').percent
+    
+    # Get current node-specific resource usage
+    # (Using non-blocking cpu_percent() to avoid hanging the gossip thread)
+    cpu_usage = node.node_process.cpu_percent(interval=None)
+    memory_usage = node.node_process.memory_percent()
+    
+    # Get current metric values
+    current_metrics = {
+        "cpu": cpu_usage,
+        "memory": memory_usage,
+        "network": bandwidth_mbps,
+        "storage": storage_percent
+    }
+
+    # Apply VoI priority + delta filtering
+    metrics_to_send = {}
+    metrics_filtered = {}
+
+    for metric, value in current_metrics.items():
+        if should_send_metric(node, metric, value):
+            metrics_to_send[metric] = value
+        else:
+            metrics_filtered[metric] = value
+
+    # Build appState — omitted metrics stay as "not_updated"
+    app_state = {}
+    for metric in metrics_to_send:
+        app_state[metric] = str(metrics_to_send[metric])
+
+    # Round-level statistics
+    node.data_flow_per_round.setdefault(node.cycle, {})
+    node.data_flow_per_round[node.cycle]['metrics_sent'] = len(metrics_to_send)
+    node.data_flow_per_round[node.cycle]['metrics_filtered'] = len(metrics_filtered)
+
+    metric_flags = {metric: (metric in metrics_to_send) for metric in current_metrics}
+
+    data = {
+        "counter": "{}".format(node.gossip_counter),
+        "cycle": "{}".format(node.cycle),
+        "digest": "",
+        "nodeState": {
+            "id": "",
+            "ip": "{}".format(node.ip),
+            "port": "{}".format(node.port),
+        },
+        "hbState": {
+            "timestamp": "{}".format(time.time()),
+            "failureCount": node.failure_counter,
+            "failureList": node.failure_list,
+            "nodeAlive": node.is_alive,
+        },
+        "appState": app_state,
         "nfState": {},
         "metric_sent_flags": metric_flags,
     }
@@ -46,22 +142,6 @@ def should_send_metric(node, metric, value):
             delta_percent = 0.0 if denom == 0 else (abs(value - prev) / denom) * 100
         else:
             delta_percent = abs(value - prev)
-METRIC_PRIORITIES = {
-    "cpu": PRIORITY_HIGH,      # CPU is critical - update every round
-    "memory": PRIORITY_MEDIUM, # Memory - update every 5 rounds
-    "network": PRIORITY_MEDIUM, # Network - update every 5 rounds
-    "storage": PRIORITY_LOW    # Storage changes slowly - update every 10 rounds
-}
-
-# Delta thresholds for each metric (minimum change to trigger update)
-METRIC_DELTAS = {
-    "cpu": 5.0,      # 5% change in CPU
-    "memory": 7.0,   # 7% change in memory
-    "network": 15.0, # 15% change in network
-    "storage": 10.0  # 10% change in storage
-}
-
-
     else:
         delta_percent = float('inf')
 
@@ -206,22 +286,6 @@ class Node:
                 self.cycle += 1
                 self.transmit(target_count)
                 time.sleep(gossip_rate)
-
-def get_new_data():
-    node = Node.instance()
-    
-    # Calculate Bandwidth (Mbps)
-    current_network_bytes = psutil.net_io_counters().bytes_recv + psutil.net_io_counters().bytes_sent
-    current_time = time.time()
-    
-    if node.last_network_bytes == 0:
-        # First call, initialize values and return 0
-        node.last_network_bytes = current_network_bytes
-        node.last_network_time = current_time
-        bandwidth_mbps = 0.0
-    else:
-        delta_bytes = current_network_bytes - node.last_network_bytes
-        delta_time = current_time - node.last_network_time
         finally:
             # Signal /terminate that the gossip loop has quiesced
             if self.quiesced_event is not None:
@@ -286,22 +350,6 @@ def get_new_data():
 
     def get_filtered_data_by_priority(self, full_data):
         """Apply VoI priority filtering to outgoing gossip data."""
-        
-        # Avoid division by zero
-        if delta_time > 0:
-            bandwidth_mbps = (delta_bytes * 8) / (delta_time * 1024 * 1024)
-        else:
-            bandwidth_mbps = 0.0
-            
-        node.last_network_bytes = current_network_bytes
-        node.last_network_time = current_time
-    
-    # Calculate Storage (Usage %)
-    storage_percent = psutil.disk_usage('/').percent
-    
-    # Get current node-specific resource usage
-    # (Using non-blocking cpu_percent() to avoid hanging the gossip thread)
-    cpu_usage = node.node_process.cpu_percent(interval=None)
         filtered_data = full_data.copy()
         # First cycle — always send everything to bootstrap the network
         if self.cycle <= 1:
@@ -350,22 +398,6 @@ def get_new_data():
 
     def send_to_node(self, n, new_time_key):
         """Push-pull gossip exchange with peer node n."""
-    memory_usage = node.node_process.memory_percent()
-    
-    # Get current metric values
-    current_metrics = {
-        "cpu": cpu_usage,
-        "memory": memory_usage,
-        "network": bandwidth_mbps,
-        "storage": storage_percent
-    }
-
-    # Apply VoI priority + delta filtering
-    metrics_to_send = {}
-    metrics_filtered = {}
-
-    for metric, value in current_metrics.items():
-        if should_send_metric(node, metric, value):
         data = self.prepare_metadata_and_own_fresh_data(new_time_key)
         try:
             r_metadata_and_updated = self.gossip_session.post(
@@ -398,22 +430,6 @@ def get_new_data():
         if own_key not in failure_list:
             failure_list.append(own_key)
             
-            metrics_to_send[metric] = value
-        else:
-            metrics_filtered[metric] = value
-
-    # Build appState — omitted metrics stay as "not_updated"
-    app_state = {}
-    for metric in metrics_to_send:
-        app_state[metric] = str(metrics_to_send[metric])
-
-    # Round-level statistics
-    node.data_flow_per_round.setdefault(node.cycle, {})
-    node.data_flow_per_round[node.cycle]['metrics_sent'] = len(metrics_to_send)
-    node.data_flow_per_round[node.cycle]['metrics_filtered'] = len(metrics_filtered)
-
-    metric_flags = {metric: (metric in metrics_to_send) for metric in current_metrics}
-
         # Always increment failureCount on every reported failure
         f_count = hb_state.get("failureCount", 0) + 1
         hb_state["failureCount"] = f_count
@@ -439,19 +455,3 @@ def get_new_data():
             self.data[new_time_key][ip_key]["hbState"]["nodeAlive"] = True
 
     # Sessions — Moved to __init__ for instance scope
-    data = {
-        "counter": "{}".format(node.gossip_counter),
-        "cycle": "{}".format(node.cycle),
-        "digest": "",
-        "nodeState": {
-            "id": "",
-            "ip": "{}".format(node.ip),
-            "port": "{}".format(node.port),
-        },
-        "hbState": {
-            "timestamp": "{}".format(time.time()),
-            "failureCount": node.failure_counter,
-            "failureList": node.failure_list,
-            "nodeAlive": node.is_alive,
-        },
-        "appState": app_state,
