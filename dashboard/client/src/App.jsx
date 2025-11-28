@@ -347,3 +347,24 @@ export default function App() {
   }, [graphData.nodes_info]);
 
   // ── Handlers ─────────────────────────────────────────────────────────────────
+  const handleKillNode = useCallback(async (nodeId) => {
+    if (pendingKills.has(nodeId)) return;
+
+    setPendingKills(prev => new Set(prev).add(nodeId));
+    const ip = ipOnly(nodeId);
+    const port = nodeId.includes(":") ? nodeId.split(":")[1] : "";
+    try {
+      const res = await fetch(`${API_BASE}/kill-node/${ip}/${port}`, { method: "POST" });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+
+      gossipKillNode(nodeId);
+      setToast({ message: `⚡ Node ${ip} terminated. Gossip peers will detect failure within 3 rounds.`, type: "success" });
+    } catch (err) {
+      setToast({ message: err.message, type: "error" });
+    } finally {
+      setPendingKills(prev => {
+        const next = new Set(prev);
+        next.delete(nodeId);
+        return next;
+      });

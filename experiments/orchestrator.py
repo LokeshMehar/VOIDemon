@@ -761,3 +761,21 @@ with connection_pool:
 database_lock = threading.Lock()
 
 
+@orchestrator.route('/push_data_to_database', methods=['POST'])
+def push_data_to_database():
+    """Receive a batch push of historical data from a gossip node and store it."""
+    client_ip = request.args.get('ip')
+    client_port = request.args.get('port')
+    client_round = request.args.get('round')
+    data = request.get_json()
+    node_key = client_ip + ":" + client_port
+
+    with database_lock:
+        connection: Connection = connection_pool
+        cursor = connection.cursor()
+        for r, va in data.items():
+            for k, j in va.items():
+                v = json.dumps(j)
+                cursor.execute('SELECT id FROM unique_entries WHERE key=? AND value=?', (k, v))
+                existing_entry = cursor.fetchone()
+                if existing_entry:
