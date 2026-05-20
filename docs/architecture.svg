@@ -92,7 +92,7 @@
   <rect width="1200" height="900" fill="url(#bg)"/>
 
   <!-- Title -->
-  <text x="600" y="38" text-anchor="middle" fill="#e2e8f0" font-size="22" font-weight="700" letter-spacing="2">👁️ VOIDemon — System Architecture</text>
+  <text x="600" y="38" text-anchor="middle" fill="#e2e8f0" font-size="22" font-weight="700" letter-spacing="2">VOIDemon — System Architecture</text>
   <text x="600" y="58" text-anchor="middle" fill="#64748b" font-size="12" letter-spacing="1">Value-of-Information Optimized Distributed Edge Monitoring</text>
 
   <!-- ═══════════════════════════════════════════════════════════════ -->
