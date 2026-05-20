@@ -2,7 +2,7 @@
 
 This document serves as an exhaustive deep dive into the engineering decisions, architectural patterns, and unavoidable trade-offs made during the implementation of **VOIDemon**. 
 
-It is structured as a Q&A designed for technical interviewers, engineering managers, and systems architects who understand distributed systems theory but need to evaluate the practical, code-level implementation choices.
+It is structured for systems enthusiasts who understand distributed systems theory but need to evaluate the practical, code-level implementation choices.
 
 ---
 
