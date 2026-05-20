@@ -17,20 +17,20 @@ The following SVG diagram provides a comprehensive, zoomed-out view of the entir
 The interactive Mermaid version below captures the same topology in a text-renderable format:
 
 ```mermaid
-graph TD
+flowchart TD
     subgraph Frontend & Control
         D[React Dashboard]
     end
-    
+
     subgraph API Layer
         A[Express API Gateway]
     end
-    
+
     subgraph Simulation Layer
         O[Python Orchestrator]
         DB[(SQLite WAL Database)]
     end
-    
+
     subgraph Containerized Edge Network
         N1[Gossip Node 1]
         N2[Gossip Node 2]
@@ -38,16 +38,28 @@ graph TD
         NX[Gossip Node N]
     end
 
-    D <-->|Socket.IO (Live Metrics)| A
-    D <-->|REST (Config)| A
-    A <-->|HTTP POST /start| O
+    D -->|Socket.IO Live Metrics| A
+    A -->|Socket.IO Live Metrics| D
+    D -->|REST Config| A
+    A -->|REST Config| D
+    A -->|HTTP POST /start| O
+    O -->|HTTP POST /start| A
     A -.->|Chaos Engine /terminate| N1
-    O -->|Spawns via Docker API| Containerized Edge Network
+    O -->|Spawns via Docker API| N1
+    O -->|Spawns via Docker API| N2
+    O -->|Spawns via Docker API| N3
+    O -->|Spawns via Docker API| NX
     O -->|Writes analytics| DB
-    N1 <-->|P2P Gossip Exchange| N2
-    N2 <-->|P2P Gossip Exchange| N3
-    N3 <-->|P2P Gossip Exchange| NX
-    Containerized Edge Network -->|Push State Updates| O
+    N1 -->|P2P Gossip| N2
+    N2 -->|P2P Gossip| N1
+    N2 -->|P2P Gossip| N3
+    N3 -->|P2P Gossip| N2
+    N3 -->|P2P Gossip| NX
+    NX -->|P2P Gossip| N3
+    N1 -->|Push State Updates| O
+    N2 -->|Push State Updates| O
+    N3 -->|Push State Updates| O
+    NX -->|Push State Updates| O
 ```
 
 ---
